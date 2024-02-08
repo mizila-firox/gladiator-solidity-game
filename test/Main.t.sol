@@ -39,6 +39,8 @@ contract CounterTest is Test {
             uint256 level,
             uint256 exp,
             bool alive,
+            uint256 gold,
+            uint timeToWait,
 
         ) = main.players(player1);
         assertEq(main.quantity_players(), 1);
@@ -64,7 +66,6 @@ contract CounterTest is Test {
 
         vm.startPrank(player2);
         main.createPlayer("player2");
-
         vm.stopPrank();
 
         Main.Player memory p1;
@@ -73,7 +74,8 @@ contract CounterTest is Test {
         Main.Player memory p2;
         p2 = main.get_players(player2);
 
-        string memory winner = main.determineWinner(p1, p2);
+        vm.startPrank(player1);
+        string memory winner = main.determineWinner(p2); // player1 attacks player2
         console.log(winner);
     }
 
@@ -85,9 +87,27 @@ contract CounterTest is Test {
         p1 = main.get_players(player1);
 
         Main.Creature memory creature;
-        creature = main.get_creatures(2);
+        creature = main.get_creatures(1);
+        console.log("exp before:", p1.exp);
 
         string memory winner = main.determineWinnerWithCreature(p1, creature);
         console.log(winner);
+
+        p1 = main.get_players(player1);
+        console.log("exp after:", p1.exp);
+
+        vm.warp(2 minutes);
+
+        // should revert
+        string memory winner2 = main.determineWinnerWithCreature(p1, creature);
+        console.log(winner2);
+
+        vm.warp(2 minutes);
+
+        string memory winner3 = main.determineWinnerWithCreature(p1, creature);
+
+        p1 = main.get_players(player1);
+        console.log("exp after:", p1.exp);
+        console.log(winner3);
     }
 }
