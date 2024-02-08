@@ -4,7 +4,10 @@ gladiator is a pvp game
 
 # pages
 - home
-  - 
+
+# TODO
+[ ] for now lets not use health, it will only make the math more complex for now.
+[ ] add a factor of lucky the the calculation? so it's never obvious who is going to win.
 
 # ideas v1
 [ ] create player profiles
