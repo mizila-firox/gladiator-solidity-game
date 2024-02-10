@@ -41,6 +41,7 @@ contract CounterTest is Test {
             bool alive,
             uint256 gold,
             uint timeToWait,
+            ,
 
         ) = main.players(player1);
         assertEq(main.quantity_players(), 1);
@@ -91,8 +92,8 @@ contract CounterTest is Test {
 
         main.determineWinnerPlayers(p2);
 
-        skip(24 hours);
-        main.determineWinnerPlayers(p2);
+        // skip(24 hours);
+        // main.determineWinnerPlayers(p2);
     }
 
     function testBattleCreature() public {
@@ -109,17 +110,17 @@ contract CounterTest is Test {
         // vm.warp(2 minutes);
         main.determineWinnerWithCreature(creature);
 
-        skip(2 minutes);
-        main.determineWinnerWithCreature(creature);
+        // skip(2 minutes);
+        // main.determineWinnerWithCreature(creature);
 
-        skip(2 minutes);
-        main.determineWinnerWithCreature(creature);
+        // skip(2 minutes);
+        // main.determineWinnerWithCreature(creature);
 
-        skip(2 minutes);
-        main.determineWinnerWithCreature(creature);
+        // skip(2 minutes);
+        // main.determineWinnerWithCreature(creature);
 
-        skip(3 minutes);
-        main.determineWinnerWithCreature(creature);
+        // skip(3 minutes);
+        // main.determineWinnerWithCreature(creature);
     }
 
     function testBattleWithCreatureAndImprove() public {

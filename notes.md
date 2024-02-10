@@ -10,11 +10,16 @@ gladiator is a pvp game
 [ ] add a factor of lucky the the calculation? so it's never obvious who is going to win.
 
 # ideas v1
+[ ] adding a factor of lucky is imperative for battles because otherwise people can know who is going to win before the battle even starts. 
+[ ] set all the attributes weights the same for now?
+
 [x] create player profiles
 [x] create a battle system
+[x] create a leveling system
+[x] create a ranking system
 [ ] create a shop system
-[ ] create a leveling system
-[ ] create a ranking system
+[ ] should have a banning system for cheaters? should be decentralized so no single person has the control of this
+
 
 
 # ideas v2

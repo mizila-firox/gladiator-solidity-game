@@ -20,6 +20,7 @@ contract Main is Test {
         bool alive; // when it dies it loses exp
         uint256 lastAttackTime;
         uint256 gold; // update this later to a struct containing more things, like items for example
+        PlayerBattleStats battleStats;
         Attributes attributes;
         // address[] playersAttacked;??
         // address[] creaturesAttacked;??
@@ -48,7 +49,7 @@ contract Main is Test {
 
     mapping(address player => Player) public players;
     mapping(string name => address) public name_to_address;
-    mapping(address => string name) public address_to_name;
+    mapping(address player => string name) public address_to_name;
 
     mapping(uint256 => Creature) public creatures;
     mapping(uint256 idCreature => uint256) public creatureAmountOfGold; // each creature can give a different amount of gold
@@ -86,7 +87,6 @@ contract Main is Test {
     constructor() {
         admin = msg.sender;
 
-        // creating initial creatures
         _creatingInitialCreatures();
     }
 
@@ -99,6 +99,9 @@ contract Main is Test {
         }
         _;
     }
+
+    // ==============================================
+    // ============== FUNCTIONS =====================
 
     function createPlayer(string memory _name) public {
         if (players[msg.sender].id != 0) {
@@ -113,6 +116,7 @@ contract Main is Test {
 
         // initial attributes
         Attributes memory _attributes = Attributes(1, 1, 1);
+        PlayerBattleStats memory _battleStats = PlayerBattleStats(0, 0, 0);
 
         players[msg.sender] = Player(
             quantity_players, // id
@@ -122,6 +126,7 @@ contract Main is Test {
             true, // alive
             0, // gold
             0, // lastAttackTime
+            _battleStats,
             _attributes
         );
 
@@ -130,18 +135,44 @@ contract Main is Test {
 
     function attackPlayer(string memory _player) public {}
 
+    uint256 private nonce = 0;
+
+    // this is a pseudo random number, it's not secure, but it's good enough for now
+    function getPseudoRandomNumber() public returns (uint256) {
+        uint256 randomNumber = (uint256(
+            keccak256(abi.encodePacked(block.timestamp, msg.sender, nonce))
+        ) % 5) + 1; // from 1 to 5
+        nonce++;
+        return randomNumber;
+    }
+
     function _calculateScore(
         Attributes memory attributes
-    ) private pure returns (uint256) {
+    ) private returns (uint256) {
         // Define weights for each attribute
-        uint256 weightStrength = 3;
-        uint256 weightAgility = 2;
+        uint256 weightLuck = 2; // this luck is random and will be assigned each time the player attack.
+        uint256 weightStrength = 1; // idealy these would be random within a range
+        uint256 weightAgility = 1;
         uint256 weightIntelligence = 1;
 
-        // Calculate total score
+        uint256 luck = getPseudoRandomNumber();
+
+        // WITHOUT LUCK = Calculate total score
+        // uint256 score = (attributes.strength * weightStrength) +
+        //     (attributes.agility * weightAgility) +
+        //     (attributes.intelligence * weightIntelligence);
+
+        // calculate with luck
+        // uint256 score = (attributes.strength * weightStrength) +
+        //     (attributes.agility * weightAgility) +
+        //     (attributes.intelligence * weightIntelligence) +
+        //     (attributes.luck * weightLuck);
+        // return score;
+
         uint256 score = (attributes.strength * weightStrength) +
             (attributes.agility * weightAgility) +
-            (attributes.intelligence * weightIntelligence);
+            (attributes.intelligence * weightIntelligence) +
+            (luck * weightLuck);
         return score;
     }
 
@@ -193,6 +224,9 @@ contract Main is Test {
         player1.lastAttackTime = block.timestamp;
 
         if (player1Score > player2Score) {
+            player1.battleStats.wins += 1;
+            player2.battleStats.losses += 1;
+
             // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
             if (player2.exp >= EXP) {
                 player2.exp -= EXP;
@@ -215,6 +249,10 @@ contract Main is Test {
 
             return player1.name;
         } else if (player2Score > player1Score) {
+            // change battle stats
+            player1.battleStats.losses += 1;
+            player2.battleStats.wins += 1;
+
             // if player1 exp is less than EXP, then it will be 0, otherwise it will be the difference
             if (player1.exp >= EXP) {
                 player1.exp -= EXP;
@@ -238,6 +276,10 @@ contract Main is Test {
 
             return player2.name;
         } else {
+            // change battle stats
+            player1.battleStats.draws += 1;
+            player2.battleStats.draws += 1;
+
             // this is horrible looking but works. refactor it later
             if (player1.exp >= EXP) {
                 player1.exp -= EXP / 2;
@@ -294,6 +336,8 @@ contract Main is Test {
         player.lastAttackTime = block.timestamp;
 
         if (playerScore > creatureScore) {
+            player.battleStats.wins += 1;
+
             // kill creature and give exp to player and everything else
             player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
             _calculateLevel(player);
@@ -309,6 +353,8 @@ contract Main is Test {
 
             return player.name;
         } else if (creatureScore > playerScore) {
+            player.battleStats.losses += 1;
+
             player.alive = false;
             // this is done so there is no underflow
             if (creature.expGiven >= player.exp) {
@@ -327,6 +373,7 @@ contract Main is Test {
 
             return creature.name;
         } else {
+            player.battleStats.draws += 1;
             emit Main__PlayerAttackedCreature(msg.sender, creature.id, "Draw");
 
             return "Draw";
