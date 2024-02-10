@@ -39,6 +39,12 @@ contract Main is Test {
         Attributes attributes;
     }
 
+    struct PlayerBattleStats {
+        uint256 wins;
+        uint256 losses;
+        uint256 draws;
+    }
+
     mapping(address player => Player) public players;
     mapping(string name => address) public name_to_address;
     mapping(address => string name) public address_to_name;
@@ -50,24 +56,6 @@ contract Main is Test {
         public timeToWaitToAttackAnotherPlayer; // time to wait to attack another player
 
     address public admin;
-
-    function isAllowedToAttackAnotherPlayer(
-        address _player1,
-        address _player2
-    ) private returns (bool) {
-        // check if 24 hours since last attack to the player 2 was passed
-        require(
-            block.timestamp >=
-                timeToWaitToAttackAnotherPlayer[_player1][_player2],
-            "Youu needto wait 24 hours to attack this player again!"
-        );
-
-        timeToWaitToAttackAnotherPlayer[_player1][_player2] =
-            block.timestamp +
-            24 hours;
-
-        return true;
-    }
 
     // ==============================================
     // ============== ERRORS ========================
@@ -121,7 +109,7 @@ contract Main is Test {
 
     function attackPlayer(string memory _player) public {}
 
-    function calculateScore(
+    function _calculateScore(
         Attributes memory attributes
     ) private pure returns (uint256) {
         // Define weights for each attribute
@@ -136,6 +124,24 @@ contract Main is Test {
         return score;
     }
 
+    function _isAllowedToAttackAnotherPlayer(
+        address _player1,
+        address _player2
+    ) private returns (bool) {
+        // check if 24 hours since last attack to the player 2 was passed
+        require(
+            block.timestamp >=
+                timeToWaitToAttackAnotherPlayer[_player1][_player2],
+            "Youu needto wait 24 hours to attack this player again!"
+        );
+
+        timeToWaitToAttackAnotherPlayer[_player1][_player2] =
+            block.timestamp +
+            24 hours;
+
+        return true;
+    }
+
     function determineWinnerPlayers(
         Player memory _player2
     ) public returns (string memory) {
@@ -143,7 +149,7 @@ contract Main is Test {
         Player storage player2 = players[name_to_address[_player2.name]];
 
         // checking 24 hours to attack another player
-        isAllowedToAttackAnotherPlayer(
+        _isAllowedToAttackAnotherPlayer(
             msg.sender,
             name_to_address[_player2.name]
         );
@@ -153,8 +159,8 @@ contract Main is Test {
             revert("All players must be alive");
         }
 
-        uint256 player1Score = calculateScore(player1.attributes);
-        uint256 player2Score = calculateScore(player2.attributes);
+        uint256 player1Score = _calculateScore(player1.attributes);
+        uint256 player2Score = _calculateScore(player2.attributes);
 
         // i want a time to cool down so the player has to wait some time before attacking again
         require(
@@ -166,18 +172,37 @@ contract Main is Test {
         player1.lastAttackTime = block.timestamp;
 
         if (player1Score > player2Score) {
+            // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
+            // if (player2.exp >= EXP) {
+            //     player2.exp -= EXP;
+            // } else {
+            //     player2.exp = 0;
+            // }
+
             player1.exp += EXP;
+            player2.exp -= EXP;
+            _calculateLevel(player1.exp);
+            _calculateLevel(player2.exp);
 
             player2.alive = false;
 
             return player1.name;
         } else if (player2Score > player1Score) {
             player2.exp += EXP;
+            player1.exp -= EXP;
+            _calculateLevel(player1.exp);
+            _calculateLevel(player2.exp);
+
             // ** player2.timeofWait  here is not necessary since it's p1 who is attacking
             player1.alive = false;
 
             return player2.name;
         } else {
+            player1.exp += EXP / 2;
+            player2.exp += EXP / 2;
+            _calculateLevel(player1.exp);
+            _calculateLevel(player2.exp);
+
             return "Draw";
         }
     }
@@ -197,8 +222,8 @@ contract Main is Test {
             revert("Player is dead");
         }
 
-        uint256 playerScore = calculateScore(player.attributes);
-        uint256 creatureScore = calculateScore(creature.attributes);
+        uint256 playerScore = _calculateScore(player.attributes);
+        uint256 creatureScore = _calculateScore(creature.attributes);
 
         // i want a time to cool down so the player has to wait some time before attacking again
         require(
@@ -212,6 +237,7 @@ contract Main is Test {
         if (playerScore > creatureScore) {
             // kill creature and give exp to player and everything else
             player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
+            _calculateLevel(player.exp);
 
             // give gold according to the creature
             player.gold += creatureAmountOfGold[creature.id];
@@ -219,7 +245,14 @@ contract Main is Test {
             return player.name;
         } else if (creatureScore > playerScore) {
             player.alive = false;
-            // TODO: should the user lose exp and gold when he dies? at least a little?
+            // this is done so there is no underflow
+            if (creature.expGiven >= player.exp) {
+                player.exp = 0;
+            } else {
+                player.exp -= creature.expGiven;
+            }
+            // player.exp -= creature.expGiven;
+            _calculateLevel(player.exp);
 
             return creature.name;
         } else {
@@ -262,6 +295,7 @@ contract Main is Test {
         creatureAmountOfGold[5] = 32;
     }
 
+    // add a check here if udnerlflow, but will revert anyways
     function improveAttribute(uint16 _attribute) public {
         Player storage player = players[msg.sender];
         uint cost;
@@ -293,7 +327,16 @@ contract Main is Test {
         player.gold -= cost; // Deduct cost from player's gold
     }
 
-    function respawn() public {}
+    function _calculateLevel(uint256) private {
+        // calculate level
+    }
+
+    // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
+    function respawn() public {
+        Player storage player = players[msg.sender];
+        require(!player.alive, "Player is already alive");
+        player.alive = true;
+    }
 
     // TODO:
     // ce quoi la meilleure façon de améliorer les attributs?, avec des coins/piéces?, ça devient plus cher à chaque fois?
