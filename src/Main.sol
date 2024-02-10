@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-contract Main {
+import "forge-std/Test.sol";
+
+contract Main is Test {
     // ==============================================
     // ============== VARIABLES =====================
 
@@ -15,7 +17,7 @@ contract Main {
         uint256 level;
         uint256 exp;
         bool alive; // when it dies it loses exp
-        uint256 timeToWait;
+        uint256 lastAttackTime;
         uint256 gold; // update this later to a struct containing more things, like items for example
         Attributes attributes;
         // address[] playersAttacked;??
@@ -44,7 +46,28 @@ contract Main {
     mapping(uint256 => Creature) public creatures;
     mapping(uint256 idCreature => uint256) public creatureAmountOfGold; // each creature can give a different amount of gold
 
+    mapping(address => mapping(address => uint))
+        public timeToWaitToAttackAnotherPlayer; // time to wait to attack another player
+
     address public admin;
+
+    function isAllowedToAttackAnotherPlayer(
+        address _player1,
+        address _player2
+    ) private returns (bool) {
+        // check if 24 hours since last attack to the player 2 was passed
+        require(
+            block.timestamp >=
+                timeToWaitToAttackAnotherPlayer[_player1][_player2],
+            "Youu needto wait 24 hours to attack this player again!"
+        );
+
+        timeToWaitToAttackAnotherPlayer[_player1][_player2] =
+            block.timestamp +
+            24 hours;
+
+        return true;
+    }
 
     // ==============================================
     // ============== ERRORS ========================
@@ -91,7 +114,7 @@ contract Main {
             0, // exp
             true, // alive
             0, // gold
-            0, // timeToWait
+            0, // lastAttackTime
             _attributes
         );
     }
@@ -102,9 +125,9 @@ contract Main {
         Attributes memory attributes
     ) private pure returns (uint256) {
         // Define weights for each attribute
-        uint256 weightStrength = 2;
-        uint256 weightAgility = 1;
-        uint256 weightIntelligence = 3;
+        uint256 weightStrength = 3;
+        uint256 weightAgility = 2;
+        uint256 weightIntelligence = 1;
 
         // Calculate total score
         uint256 score = (attributes.strength * weightStrength) +
@@ -113,11 +136,17 @@ contract Main {
         return score;
     }
 
-    function determineWinner(
+    function determineWinnerPlayers(
         Player memory _player2
     ) public returns (string memory) {
         Player storage player1 = players[msg.sender];
         Player storage player2 = players[name_to_address[_player2.name]];
+
+        // checking 24 hours to attack another player
+        isAllowedToAttackAnotherPlayer(
+            msg.sender,
+            name_to_address[_player2.name]
+        );
 
         // is player1 alive and player2 alive?
         if (!player1.alive && !player2.alive) {
@@ -127,9 +156,17 @@ contract Main {
         uint256 player1Score = calculateScore(player1.attributes);
         uint256 player2Score = calculateScore(player2.attributes);
 
+        // i want a time to cool down so the player has to wait some time before attacking again
+        require(
+            block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
+                player1.lastAttackTime == 0,
+            "Player is waiting"
+        );
+
+        player1.lastAttackTime = block.timestamp;
+
         if (player1Score > player2Score) {
             player1.exp += EXP;
-            player1.timeToWait = block.timestamp + MIN_TIME_WAITING;
 
             player2.alive = false;
 
@@ -146,9 +183,10 @@ contract Main {
     }
 
     function determineWinnerWithCreature(
-        Player memory player,
         Creature memory creature
     ) public returns (string memory) {
+        Player storage player = players[msg.sender];
+
         // check if creature exists
         if (creature.id == 0) {
             revert("Creature does not exist");
@@ -162,21 +200,26 @@ contract Main {
         uint256 playerScore = calculateScore(player.attributes);
         uint256 creatureScore = calculateScore(creature.attributes);
 
-        // i want a time to cool down so the player can attack again
+        // i want a time to cool down so the player has to wait some time before attacking again
         require(
-            players[msg.sender].timeToWait <= block.timestamp,
+            block.timestamp >= player.lastAttackTime + MIN_TIME_WAITING ||
+                player.lastAttackTime == 0,
             "Player is waiting"
         );
 
-        players[msg.sender].timeToWait = block.timestamp; // update time to wait
+        player.lastAttackTime = block.timestamp;
 
         if (playerScore > creatureScore) {
             // kill creature and give exp to player and everything else
-            players[msg.sender].exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
+            player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
+
+            // give gold according to the creature
+            player.gold += creatureAmountOfGold[creature.id];
 
             return player.name;
         } else if (creatureScore > playerScore) {
-            players[msg.sender].alive = false;
+            player.alive = false;
+            // TODO: should the user lose exp and gold when he dies? at least a little?
 
             return creature.name;
         } else {
@@ -219,8 +262,35 @@ contract Main {
         creatureAmountOfGold[5] = 32;
     }
 
-    function improveAttribute() public {
+    function improveAttribute(uint16 _attribute) public {
         Player storage player = players[msg.sender];
+        uint cost;
+
+        // double the cost every time
+        if (_attribute == 1) {
+            cost = 1 << player.attributes.strength; // Calculate cost as 2^strength
+            require(
+                player.gold >= cost,
+                "Not enough gold for strength improvement"
+            );
+            player.attributes.strength += 1;
+        } else if (_attribute == 2) {
+            cost = 1 << player.attributes.agility; // Calculate cost as 2^agility
+            require(
+                player.gold >= cost,
+                "Not enough gold for agility improvement"
+            );
+            player.attributes.agility += 1;
+        } else if (_attribute == 3) {
+            cost = 1 << player.attributes.intelligence; // Calculate cost as 2^intelligence
+            require(
+                player.gold >= cost,
+                "Not enough gold for intelligence improvement"
+            );
+            player.attributes.intelligence += 1;
+        }
+
+        player.gold -= cost; // Deduct cost from player's gold
     }
 
     function respawn() public {}

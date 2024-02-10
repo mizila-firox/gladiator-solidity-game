@@ -60,13 +60,28 @@ contract CounterTest is Test {
         main.createPlayer("player1");
     }
 
-    function testBattle() public {
+    // function testBattle() public {
+    //     vm.startPrank(player1);
+    //     main.createPlayer("player1");
+
+    //     vm.startPrank(player2);
+    //     main.createPlayer("player2");
+    //     vm.stopPrank();
+
+    //     Main.Player memory p1;
+    //     p1 = main.get_players(player1);
+
+    //     Main.Player memory p2;
+    //     p2 = main.get_players(player2);
+
+    //     vm.startPrank(player1);
+    //     string memory winner = main.determineWinner(p2); // player1 attacks player2
+    //     console.log(winner);
+    // }
+
+    function testBattlePlayer() public {
         vm.startPrank(player1);
         main.createPlayer("player1");
-
-        vm.startPrank(player2);
-        main.createPlayer("player2");
-        vm.stopPrank();
 
         Main.Player memory p1;
         p1 = main.get_players(player1);
@@ -74,12 +89,13 @@ contract CounterTest is Test {
         Main.Player memory p2;
         p2 = main.get_players(player2);
 
-        vm.startPrank(player1);
-        string memory winner = main.determineWinner(p2); // player1 attacks player2
-        console.log(winner);
+        main.determineWinnerPlayers(p2);
+
+        skip(24 hours);
+        main.determineWinnerPlayers(p2);
     }
 
-    function testBattleWithCreature() public {
+    function testBattleCreature() public {
         vm.startPrank(player1);
         main.createPlayer("player1");
 
@@ -90,24 +106,56 @@ contract CounterTest is Test {
         creature = main.get_creatures(1);
         console.log("exp before:", p1.exp);
 
-        string memory winner = main.determineWinnerWithCreature(p1, creature);
+        // vm.warp(2 minutes);
+        main.determineWinnerWithCreature(creature);
+
+        skip(2 minutes);
+        main.determineWinnerWithCreature(creature);
+
+        skip(2 minutes);
+        main.determineWinnerWithCreature(creature);
+
+        skip(2 minutes);
+        main.determineWinnerWithCreature(creature);
+
+        skip(3 minutes);
+        main.determineWinnerWithCreature(creature);
+    }
+
+    function testBattleWithCreatureAndImprove() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        Main.Player memory p1;
+        p1 = main.get_players(player1);
+
+        Main.Creature memory creature;
+        creature = main.get_creatures(1);
+        console.log("exp before:", p1.exp);
+
+        string memory winner = main.determineWinnerWithCreature(creature);
         console.log(winner);
 
         p1 = main.get_players(player1);
         console.log("exp after:", p1.exp);
 
-        vm.warp(2 minutes);
+        // vm.warp(3 minutes);
 
         // should revert
-        string memory winner2 = main.determineWinnerWithCreature(p1, creature);
-        console.log(winner2);
+        // string memory winner2 = main.determineWinnerWithCreature(creature);
+        // console.log(winner2);
 
-        vm.warp(2 minutes);
+        // console.log("strength before: ", p1.attributes.strength);
+        // console.log("gold before: ", p1.gold);
 
-        string memory winner3 = main.determineWinnerWithCreature(p1, creature);
+        // main.improveAttribute(1); // improve strength
+        // p1 = main.get_players(player1);
+        // console.log("exp after improve:", p1.exp);
 
-        p1 = main.get_players(player1);
-        console.log("exp after:", p1.exp);
-        console.log(winner3);
+        // console.log("strength before: ", p1.attributes.strength);
+        // console.log("gold before: ", p1.gold);
+
+        // uint str = p1.attributes.strength;
+        // assertEq(str, 2);
     }
 }

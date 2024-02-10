@@ -10,17 +10,17 @@ gladiator is a pvp game
 [ ] add a factor of lucky the the calculation? so it's never obvious who is going to win.
 
 # ideas v1
-[ ] create player profiles
-[ ] create a battle system
+[x] create player profiles
+[x] create a battle system
 [ ] create a shop system
 [ ] create a leveling system
 [ ] create a ranking system
-[ ] create a guild system
 
 
 # ideas v2
 [ ] create a friends system
 [ ] create a quest system
+[ ] create a guild system
 [ ] create a daily reward system
 [ ] create a daily quest system
 [ ] create a daily challenge system
