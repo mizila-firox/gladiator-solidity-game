@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
+import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 contract Main is Test {
     // ==============================================
@@ -64,6 +65,24 @@ contract Main is Test {
     error Main__PlayerAlreadyExists(address player);
     error Main__NameAlreadyExists(string name);
 
+    // ==============================================
+    // ============== EVENTS ========================
+    event Main__PlayerCreated(address player, string name);
+    event Main__PlayerAttackedPlayer(
+        address player1,
+        address player2,
+        string winner
+    );
+    event Main__PlayerAttackedCreature(
+        address player,
+        uint256 creatureId,
+        string winner
+    );
+    event Main__PlayerRespawned(address player);
+    event Main__PlayerImprovedAttribute(address player, uint16 attribute);
+
+    // event Main__PlayerDied(address player);
+
     constructor() {
         admin = msg.sender;
 
@@ -105,6 +124,8 @@ contract Main is Test {
             0, // lastAttackTime
             _attributes
         );
+
+        emit Main__PlayerCreated(msg.sender, _name);
     }
 
     function attackPlayer(string memory _player) public {}
@@ -173,35 +194,73 @@ contract Main is Test {
 
         if (player1Score > player2Score) {
             // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
-            // if (player2.exp >= EXP) {
-            //     player2.exp -= EXP;
-            // } else {
-            //     player2.exp = 0;
-            // }
+            if (player2.exp >= EXP) {
+                player2.exp -= EXP;
+            } else {
+                player2.exp = 0;
+            }
 
             player1.exp += EXP;
-            player2.exp -= EXP;
-            _calculateLevel(player1.exp);
-            _calculateLevel(player2.exp);
+            // player2.exp -= EXP;
+            _calculateLevel(player1);
+            _calculateLevel(player2);
+
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                player1.name
+            );
 
             player2.alive = false;
 
             return player1.name;
         } else if (player2Score > player1Score) {
+            // if player1 exp is less than EXP, then it will be 0, otherwise it will be the difference
+            if (player1.exp >= EXP) {
+                player1.exp -= EXP;
+            } else {
+                player1.exp = 0;
+            }
+
             player2.exp += EXP;
-            player1.exp -= EXP;
-            _calculateLevel(player1.exp);
-            _calculateLevel(player2.exp);
+            // player1.exp -= EXP;
+            _calculateLevel(player1);
+            _calculateLevel(player2);
 
             // ** player2.timeofWait  here is not necessary since it's p1 who is attacking
             player1.alive = false;
 
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                player2.name
+            );
+
             return player2.name;
         } else {
-            player1.exp += EXP / 2;
-            player2.exp += EXP / 2;
-            _calculateLevel(player1.exp);
-            _calculateLevel(player2.exp);
+            // this is horrible looking but works. refactor it later
+            if (player1.exp >= EXP) {
+                player1.exp -= EXP / 2;
+            } else {
+                player1.exp = 0;
+            }
+
+            if (player2.exp >= EXP) {
+                player2.exp -= EXP / 2;
+            } else {
+                player2.exp = 0;
+            }
+
+            // player1.exp += EXP / 2;
+            // player2.exp += EXP / 2;
+            _calculateLevel(player1);
+            _calculateLevel(player2);
+
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                "Draw"
+            );
 
             return "Draw";
         }
@@ -237,10 +296,16 @@ contract Main is Test {
         if (playerScore > creatureScore) {
             // kill creature and give exp to player and everything else
             player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
-            _calculateLevel(player.exp);
+            _calculateLevel(player);
 
             // give gold according to the creature
             player.gold += creatureAmountOfGold[creature.id];
+
+            emit Main__PlayerAttackedCreature(
+                msg.sender,
+                creature.id,
+                player.name
+            );
 
             return player.name;
         } else if (creatureScore > playerScore) {
@@ -252,10 +317,18 @@ contract Main is Test {
                 player.exp -= creature.expGiven;
             }
             // player.exp -= creature.expGiven;
-            _calculateLevel(player.exp);
+            _calculateLevel(player);
+
+            emit Main__PlayerAttackedCreature(
+                msg.sender,
+                creature.id,
+                creature.name
+            );
 
             return creature.name;
         } else {
+            emit Main__PlayerAttackedCreature(msg.sender, creature.id, "Draw");
+
             return "Draw";
         }
     }
@@ -308,6 +381,8 @@ contract Main is Test {
                 "Not enough gold for strength improvement"
             );
             player.attributes.strength += 1;
+
+            emit Main__PlayerImprovedAttribute(msg.sender, _attribute);
         } else if (_attribute == 2) {
             cost = 1 << player.attributes.agility; // Calculate cost as 2^agility
             require(
@@ -315,6 +390,7 @@ contract Main is Test {
                 "Not enough gold for agility improvement"
             );
             player.attributes.agility += 1;
+            emit Main__PlayerImprovedAttribute(msg.sender, _attribute);
         } else if (_attribute == 3) {
             cost = 1 << player.attributes.intelligence; // Calculate cost as 2^intelligence
             require(
@@ -322,13 +398,16 @@ contract Main is Test {
                 "Not enough gold for intelligence improvement"
             );
             player.attributes.intelligence += 1;
+            emit Main__PlayerImprovedAttribute(msg.sender, _attribute);
         }
 
         player.gold -= cost; // Deduct cost from player's gold
     }
 
-    function _calculateLevel(uint256) private {
-        // calculate level
+    // dont know if this is working correctly
+    function _calculateLevel(Player storage _player) private {
+        uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
+        _player.level = newLevel;
     }
 
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
@@ -336,10 +415,12 @@ contract Main is Test {
         Player storage player = players[msg.sender];
         require(!player.alive, "Player is already alive");
         player.alive = true;
+        emit Main__PlayerRespawned(msg.sender);
     }
 
     // TODO:
-    // ce quoi la meilleure façon de améliorer les attributs?, avec des coins/piéces?, ça devient plus cher à chaque fois?
+    // CRETE THE SCOREBOARD
+    // EMIT EVENTS FOR EVERYTHING THAT HAPPENS
     //[[[ upgrade attributes]]]
 
     // boost?
