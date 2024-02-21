@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
+// import "forge-std/Test.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
-contract Main is Test {
+contract Main {
     // ==============================================
     // ============== VARIABLES =====================
 
+    uint public num = 777;
     uint256 constant MIN_TIME_WAITING = 2 minutes;
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a cosntant
     uint256 public quantity_players = 0;
@@ -104,6 +105,8 @@ contract Main is Test {
     // ============== FUNCTIONS =====================
 
     function createPlayer(string memory _name) public {
+        // TODO:  checks if _name is == "", or the default
+
         if (players[msg.sender].id != 0) {
             revert Main__PlayerAlreadyExists({player: msg.sender});
         }
@@ -308,6 +311,8 @@ contract Main is Test {
         }
     }
 
+    // TODO: this should be easy and very specific which monster, re do this with ifs/elses
+    // since the front is defining every thing, it's better to do it here
     function determineWinnerWithCreature(
         Creature memory creature
     ) public returns (string memory) {
@@ -457,6 +462,7 @@ contract Main is Test {
         _player.level = newLevel;
     }
 
+    //
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
     function respawn() public {
         Player storage player = players[msg.sender];
