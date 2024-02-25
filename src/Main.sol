@@ -463,7 +463,7 @@ contract Main {
     }
 
     //
-
+    //
     //
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
     function respawn() public {
