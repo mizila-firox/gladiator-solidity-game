@@ -8,9 +8,9 @@ contract Main {
     // ==============================================
     // ============== VARIABLES =====================
 
-    uint public num = 777;
+    uint256 public num = 777;
     uint256 constant MIN_TIME_WAITING = 2 minutes;
-    uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a cosntant
+    uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
 
     struct Player {
@@ -26,6 +26,7 @@ contract Main {
         // address[] playersAttacked;??
         // address[] creaturesAttacked;??
         // address of owner to make it simpler instead of having to search every time
+        address playerAddress;
     }
 
     struct Attributes {
@@ -105,7 +106,9 @@ contract Main {
     // ============== FUNCTIONS =====================
 
     function createPlayer(string memory _name) public {
-        // TODO:  checks if _name is == "", or the default
+        if (bytes(_name).length == 0) {
+            revert("Name cannot be empty");
+        }
 
         if (players[msg.sender].id != 0) {
             revert Main__PlayerAlreadyExists({player: msg.sender});
@@ -130,7 +133,8 @@ contract Main {
             0, // gold
             0, // lastAttackTime
             _battleStats,
-            _attributes
+            _attributes,
+            msg.sender
         );
 
         emit Main__PlayerCreated(msg.sender, _name);
@@ -314,7 +318,7 @@ contract Main {
     // TODO: this should be easy and very specific which monster, re do this with ifs/elses
     // since the front is defining every thing, it's better to do it here
     function determineWinnerWithCreature(
-        Creature memory creature
+        Creature memory creature // TODO: THE ID of the creature is enough here, dont need to pass the obj CREATURE
     ) public returns (string memory) {
         Player storage player = players[msg.sender];
 

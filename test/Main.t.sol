@@ -42,6 +42,7 @@ contract CounterTest is Test {
             uint256 gold,
             uint timeToWait,
             ,
+            ,
 
         ) = main.players(player1);
         assertEq(main.quantity_players(), 1);
