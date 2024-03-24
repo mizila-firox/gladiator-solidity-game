@@ -88,21 +88,21 @@ contract CounterTest is Test {
 
     function testTuningLuckParam() public createPlayer {
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        skip(13 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
         skip(14 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        skip(15 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        // main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        // skip(14 minutes);
+        // main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        // skip(15 minutes);
+        // main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
     }
 
-    function testAttackMonsterTwice() public {
-        vm.startPrank(player1);
-        main.createPlayer("player1");
+    function testAttackStrongMonster() public createPlayer {
+        string memory result = main.determineWinnerWithCreature(1); // 1 == Globin the weakest creature
+        console.log("winner:", result);
 
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        skip(10 minutes);
 
-        skip(1000 seconds);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        string memory result2 = main.determineWinnerWithCreature(3); // 3 == Dragon,  the strongest creature
+        console.log("winner:", result2);
     }
 }

@@ -161,6 +161,7 @@ contract Main is Test {
         return randomNumber;
     }
 
+    // calculates the chance of winning of each player and checks who has the highest score
     function _calculateScore(
         Attributes memory attributes
     ) private returns (uint256) {
@@ -313,8 +314,83 @@ contract Main is Test {
     //     }
     // }
 
-    // TODO: this should be easy and very specific which monster, re do this with ifs/elses
-    // since the front is defining every thing, it's better to do it here
+    // is this the correct one?
+    function determineWinnerPlayers(
+        Player memory _player2
+    ) private returns (string memory) {
+        Player storage player1 = players[msg.sender]; // [DO IT LATER] should it use msgSender library in case of somone is subzidizing the txs?
+        Player storage player2 = players[name_to_address[_player2.name]];
+
+        // checking 24 hours to attack another player
+        _isAllowedToAttackAnotherPlayer(
+            msg.sender,
+            name_to_address[_player2.name]
+        );
+
+        if (!player1.alive || !player2.alive) {
+            revert("All players must be alive");
+        }
+
+        // calculates the fight
+        uint256 player1Score = _calculateScore(player1.attributes);
+        uint256 player2Score = _calculateScore(player2.attributes);
+
+        // i want a time to cool down so the player has to wait some time before attacking again
+        // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
+        require(
+            block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
+                player1.lastAttackTime == 0,
+            "Player is waiting"
+        );
+
+        player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
+
+        if (player1Score > player2Score) {
+            _calculateLevelPlayerAgainstPlayer(
+                FightResult.WIN,
+                player1,
+                _player2
+            );
+
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                player1.name
+            );
+
+            return player1.name;
+            //
+        } else if (player2Score > player1Score) {
+            _calculateLevelPlayerAgainstPlayer(
+                FightResult.LOSS,
+                player1,
+                _player2
+            );
+
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                player2.name
+            );
+
+            return player2.name;
+        } else {
+            _calculateLevelPlayerAgainstPlayer(
+                FightResult.DRAW,
+                player1,
+                _player2
+            );
+
+            emit Main__PlayerAttackedPlayer(
+                msg.sender,
+                name_to_address[_player2.name],
+                "Draw"
+            );
+
+            return "Draw";
+        }
+    }
+
     function determineWinnerWithCreature(
         uint256 _creatureId
     ) public returns (string memory) {
@@ -371,7 +447,6 @@ contract Main is Test {
             );
 
             // TODO: should the player lose gold when he dies?
-
             return creature.name;
         } else {
             player.battleStats.draws += 1;
@@ -381,6 +456,75 @@ contract Main is Test {
             return "Draw";
         }
     }
+
+    // CHECK THIS FUNCTION TO SEE IF SOME IMPORTANT LOGIC WAS FORGOTEN HERE.
+    // function determineWinnerWithPlayer(
+    //     FightResult _fightResult,
+    //     address _player1,
+    //     address _player2
+    // ) public returns (string memory) {
+    //     Player storage player = players[msg.sender];
+    //     Creature memory creature = creatures[_creatureId];
+
+    //     // check if creature exists
+    //     if (creature.id == 0 || creature.id > 5) {
+    //         revert("Creature does not exist");
+    //     }
+
+    //     // is player alive?
+    //     if (!player.alive) {
+    //         revert("Player is dead");
+    //     }
+
+    //     // the one who makes the more amount of points wins
+    //     uint256 playerScore = _calculateScore(player.attributes);
+    //     uint256 creatureScore = _calculateScore(creature.attributes);
+    //     console.log(playerScore, creatureScore);
+
+    //     // i want a time to cool down so the player has to wait some time before attacking again
+    //     require(
+    //         block.timestamp >= player.lastAttackTime + MIN_TIME_WAITING ||
+    //             player.lastAttackTime == 0,
+    //         "Player is waiting"
+    //     );
+
+    //     player.lastAttackTime = block.timestamp;
+
+    //     if (playerScore > creatureScore) {
+    //         player.battleStats.wins += 1;
+
+    //         // kill creature and give exp to player and everything else
+    //         _calculateLevel(FightResult.WIN, player, creature);
+    //         // give gold according to the creature. after maybe make a random amount of gold?
+    //         player.gold += creatureAmountOfGold[creature.id];
+
+    //         emit Main__PlayerAttackedCreature(
+    //             msg.sender,
+    //             creature.id,
+    //             player.name
+    //         );
+
+    //         return player.name;
+    //     } else if (creatureScore > playerScore) {
+    //         player.battleStats.losses += 1;
+    //         player.alive = false;
+    //         _calculateLevel(FightResult.LOSS, player, creature);
+    //         emit Main__PlayerAttackedCreature(
+    //             msg.sender,
+    //             creature.id,
+    //             creature.name
+    //         );
+
+    //         // TODO: should the player lose gold when he dies?
+    //         return creature.name;
+    //     } else {
+    //         player.battleStats.draws += 1;
+    //         _calculateLevel(FightResult.DRAW, player, creature);
+    //         emit Main__PlayerAttackedCreature(msg.sender, creature.id, "Draw");
+
+    //         return "Draw";
+    //     }
+    // }
 
     // 1. Goblin
     // 2. Orc
@@ -460,7 +604,6 @@ contract Main is Test {
         DRAW
     }
 
-    // @audit-info This is not taking into account the exp of the creature the player killed
     // TODO: if the
     function _calculateLevel(
         FightResult _fightResult,
@@ -469,11 +612,22 @@ contract Main is Test {
     ) private {
         if (_fightResult == FightResult.WIN) {
             _player.exp += _creature.expGiven;
+            // add gold to the player
+            _player.gold += creatureAmountOfGold[_creature.id];
+
+            //
         } else if (_fightResult == FightResult.LOSS) {
             if (_player.exp >= _creature.expGiven) {
                 _player.exp -= _creature.expGiven;
             } else {
                 _player.exp = 0;
+            }
+
+            // remove gold from the player
+            if (_player.gold >= creatureAmountOfGold[_creature.id]) {
+                _player.gold -= creatureAmountOfGold[_creature.id];
+            } else {
+                _player.gold = 0;
             }
         } else {
             // DRAW nothing happens for now
@@ -485,9 +639,65 @@ contract Main is Test {
     }
 
     function _calculateLevelPlayerAgainstPlayer(
+        FightResult _fightResult,
         Player storage _player,
         Player memory _player2
-    ) private {}
+    ) private {
+        if (_fightResult == FightResult.WIN) {
+            // updates both players exp, if the player2 exp is less than the exp given, it will be 0 so it does not go negative
+            // _player.exp += EXP;
+
+            // TODO: should it take some gold from the player2?
+            // this is taking 10 gold from player2 and giving it to player1, but it can be changed later according to the amount of gold the player being attacked has
+            uint256 player2Gold = _player2.gold;
+            if (player2Gold >= 10) {
+                _player2.gold -= 10;
+                _player.gold += 10;
+            } else {
+                _player2.gold = 0;
+                _player.gold += player2Gold;
+            }
+
+            if (_player2.exp >= EXP) {
+                _player2.exp -= EXP;
+            } else {
+                _player2.exp = 0;
+            }
+
+            _player2.alive = false;
+            _player2.battleStats.losses += 1;
+            _player.battleStats.wins += 1;
+            // _calculateLevel(player1);
+            // _calculateLevel(player2);
+
+            //
+        } else if (_fightResult == FightResult.LOSS) {
+            if (_player.exp >= EXP) {
+                _player.exp -= EXP;
+            } else {
+                _player.exp = 0;
+            }
+
+            _player.alive = false;
+            _player.battleStats.losses += 1;
+            _player2.battleStats.wins += 1;
+            // _calculateLevel(player1);
+            // _calculateLevel(player2);
+
+            // IF WE INCREASE PLAYER2 EXP BY HIM BEING ATTACKED, IT CAN BE USED TO GAME THE SYSTEM, SO WE WILL NOT INCREASE IT
+        } else {
+            // DRAW nothing happens for now
+        }
+
+        // CALCULATE THIS PART BELLOW IN ANOTHER FN????!!!!
+        // Recalculate the player's level based on the new exp amount.
+        uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
+        _player.level = newLevel;
+
+        // now calculate player2 level
+        uint256 newLevel2 = Math.sqrt(_player2.exp / 1000) + 1;
+        _player2.level = newLevel2;
+    }
 
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
     function respawn() public {
