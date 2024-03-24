@@ -9,7 +9,8 @@ contract Main {
     // ============== VARIABLES =====================
 
     uint256 public num = 777;
-    uint256 constant MIN_TIME_WAITING = 2 minutes;
+    uint256 constant MIN_TIME_WAITING = 30 seconds;
+    uint256 constant RESPAWN_WAITING = 1 minutes;
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
 
@@ -27,6 +28,7 @@ contract Main {
         // address[] creaturesAttacked;??
         // address of owner to make it simpler instead of having to search every time
         address playerAddress;
+        uint256 timeToWaitToRespawn;
     }
 
     struct Attributes {
@@ -134,13 +136,17 @@ contract Main {
             0, // lastAttackTime
             _battleStats,
             _attributes,
-            msg.sender
+            msg.sender,
+            0
         );
 
         emit Main__PlayerCreated(msg.sender, _name);
     }
 
-    function attackPlayer(string memory _player) public {}
+    function attackPlayer(string memory _player) public {
+        Player memory _player2 = players[name_to_address[_player]];
+        determineWinnerPlayers(_player2);
+    }
 
     uint256 private nonce = 0;
 
@@ -164,18 +170,6 @@ contract Main {
 
         uint256 luck = getPseudoRandomNumber();
 
-        // WITHOUT LUCK = Calculate total score
-        // uint256 score = (attributes.strength * weightStrength) +
-        //     (attributes.agility * weightAgility) +
-        //     (attributes.intelligence * weightIntelligence);
-
-        // calculate with luck
-        // uint256 score = (attributes.strength * weightStrength) +
-        //     (attributes.agility * weightAgility) +
-        //     (attributes.intelligence * weightIntelligence) +
-        //     (attributes.luck * weightLuck);
-        // return score;
-
         uint256 score = (attributes.strength * weightStrength) +
             (attributes.agility * weightAgility) +
             (attributes.intelligence * weightIntelligence) +
@@ -191,7 +185,7 @@ contract Main {
         require(
             block.timestamp >=
                 timeToWaitToAttackAnotherPlayer[_player1][_player2],
-            "Youu needto wait 24 hours to attack this player again!"
+            "You need to wait 24 hours to attack this player again!"
         );
 
         timeToWaitToAttackAnotherPlayer[_player1][_player2] =
@@ -203,7 +197,7 @@ contract Main {
 
     function determineWinnerPlayers(
         Player memory _player2
-    ) public returns (string memory) {
+    ) private returns (string memory) {
         Player storage player1 = players[msg.sender];
         Player storage player2 = players[name_to_address[_player2.name]];
 
@@ -213,11 +207,11 @@ contract Main {
             name_to_address[_player2.name]
         );
 
-        // is player1 alive and player2 alive?
-        if (!player1.alive && !player2.alive) {
+        if (!player1.alive || !player2.alive) {
             revert("All players must be alive");
         }
 
+        // calculates the fight
         uint256 player1Score = _calculateScore(player1.attributes);
         uint256 player2Score = _calculateScore(player2.attributes);
 
@@ -318,9 +312,10 @@ contract Main {
     // TODO: this should be easy and very specific which monster, re do this with ifs/elses
     // since the front is defining every thing, it's better to do it here
     function determineWinnerWithCreature(
-        Creature memory creature // TODO: THE ID of the creature is enough here, dont need to pass the obj CREATURE
+        uint256 _creatureId
     ) public returns (string memory) {
         Player storage player = players[msg.sender];
+        Creature memory creature = creatures[_creatureId];
 
         // check if creature exists
         if (creature.id == 0) {
@@ -332,6 +327,7 @@ contract Main {
             revert("Player is dead");
         }
 
+        // the one who makes the more amount of points wins
         uint256 playerScore = _calculateScore(player.attributes);
         uint256 creatureScore = _calculateScore(creature.attributes);
 
@@ -349,7 +345,7 @@ contract Main {
 
             // kill creature and give exp to player and everything else
             player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
-            _calculateLevel(player);
+            _calculateLevel(player, creature);
 
             // give gold according to the creature
             player.gold += creatureAmountOfGold[creature.id];
@@ -394,6 +390,7 @@ contract Main {
     // 3. Troll
     // 4. Dragon
     // 5. Hydra
+    // @audit-ok
     function _creatingInitialCreatures() private {
         Attributes memory _attributes1 = Attributes(0, 0, 0);
         Creature memory goblin = Creature(1, "Goblin", 1, 10, _attributes1);
@@ -424,7 +421,7 @@ contract Main {
         creatureAmountOfGold[5] = 32;
     }
 
-    // add a check here if udnerlflow, but will revert anyways
+    // add a check here if underflow, but will revert anyways
     function improveAttribute(uint16 _attribute) public {
         Player storage player = players[msg.sender];
         uint cost;
@@ -460,19 +457,45 @@ contract Main {
         player.gold -= cost; // Deduct cost from player's gold
     }
 
-    // dont know if this is working correctly
-    function _calculateLevel(Player storage _player) private {
+    // @audit-info This is not taking into account the exp of the creature the player killed
+    function _calculateLevel(
+        Player storage _player,
+        Creature memory _creature
+    ) private {
+        // Add the creature's expGiven to the player's current exp.
+        _player.exp += _creature.expGiven;
+
+        // Recalculate the player's level based on the new exp amount.
+        // This considers the difficulty of creatures defeated.
         uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
         _player.level = newLevel;
     }
 
-    //
-    //
-    //
+    function _calculateLevelPlayerAgainstPlayer(
+        Player storage _player,
+        Player memory _player2
+    ) private {
+        // Add 1% of Player 2's exp to Player 1's current exp.
+        uint256 expToAdd = _player2.exp / 100;
+        _player.exp += expToAdd;
+
+        // Recalculate the player's level based on the new exp amount.
+        uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
+        _player.level = newLevel;
+    }
+
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
     function respawn() public {
+        // give the player a cooldown to respawn, he can get back quickly by Ruby
         Player storage player = players[msg.sender];
         require(!player.alive, "Player is already alive");
+
+        //checking if X minutes have passed since the player died
+        // for now this will always pass since this is 0. need to be implemented when the player dies
+        require(
+            block.timestamp >= player.timeToWaitToRespawn,
+            "You need to wait 1 minute to respawn"
+        );
         player.alive = true;
         emit Main__PlayerRespawned(msg.sender);
     }
