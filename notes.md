@@ -8,6 +8,8 @@ gladiator is a pvp game
   
   - for the players lets give it a fixed amount of exp for now and just change it later for incentives to attack stronger players.
 
+  for now the score is the counting the same for both monsters and players.
+
 # goals
 
 # pages
@@ -21,6 +23,7 @@ gladiator is a pvp game
 # ideas v1
 [ ] adding a factor of lucky is imperative for battles because otherwise people can know who is going to win before the battle even starts. 
 [ ] set all the attributes weights the same for now?
+[ ] should the player lose gold?
 
 [ ] if the player dies does he loses a consederable amount of exp?
 - what is the relation between level and exp?

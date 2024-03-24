@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-// import "forge-std/Test.sol";
+import "forge-std/Test.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
-contract Main {
+// @audit contract wont work when importing the Test framework
+// @audit contract wont work when importing the Test framework
+contract Main is Test {
     // ==============================================
     // ============== VARIABLES =====================
 
@@ -111,7 +113,6 @@ contract Main {
         if (bytes(_name).length == 0) {
             revert("Name cannot be empty");
         }
-
         if (players[msg.sender].id != 0) {
             revert Main__PlayerAlreadyExists({player: msg.sender});
         }
@@ -143,10 +144,10 @@ contract Main {
         emit Main__PlayerCreated(msg.sender, _name);
     }
 
-    function attackPlayer(string memory _player) public {
-        Player memory _player2 = players[name_to_address[_player]];
-        determineWinnerPlayers(_player2);
-    }
+    // function attackPlayer(string memory _player) public {
+    //     Player memory _player2 = players[name_to_address[_player]];
+    //     determineWinnerPlayers(_player2);
+    // }
 
     uint256 private nonce = 0;
 
@@ -156,6 +157,7 @@ contract Main {
             keccak256(abi.encodePacked(block.timestamp, msg.sender, nonce))
         ) % 5) + 1; // from 1 to 5
         nonce++;
+
         return randomNumber;
     }
 
@@ -195,119 +197,121 @@ contract Main {
         return true;
     }
 
-    function determineWinnerPlayers(
-        Player memory _player2
-    ) private returns (string memory) {
-        Player storage player1 = players[msg.sender];
-        Player storage player2 = players[name_to_address[_player2.name]];
+    // function determineWinnerPlayers(
+    //     Player memory _player2
+    // ) private returns (string memory) {
+    //     Player storage player1 = players[msg.sender]; // [DO IT LATER] should it use msgSender library in case of somone is subzidizing the txs?
+    //     Player storage player2 = players[name_to_address[_player2.name]];
 
-        // checking 24 hours to attack another player
-        _isAllowedToAttackAnotherPlayer(
-            msg.sender,
-            name_to_address[_player2.name]
-        );
+    //     // checking 24 hours to attack another player
+    //     _isAllowedToAttackAnotherPlayer(
+    //         msg.sender,
+    //         name_to_address[_player2.name]
+    //     );
 
-        if (!player1.alive || !player2.alive) {
-            revert("All players must be alive");
-        }
+    //     if (!player1.alive || !player2.alive) {
+    //         revert("All players must be alive");
+    //     }
 
-        // calculates the fight
-        uint256 player1Score = _calculateScore(player1.attributes);
-        uint256 player2Score = _calculateScore(player2.attributes);
+    //     // calculates the fight
+    //     uint256 player1Score = _calculateScore(player1.attributes);
+    //     uint256 player2Score = _calculateScore(player2.attributes);
 
-        // i want a time to cool down so the player has to wait some time before attacking again
-        require(
-            block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
-                player1.lastAttackTime == 0,
-            "Player is waiting"
-        );
+    //     // i want a time to cool down so the player has to wait some time before attacking again
+    //     // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
+    //     require(
+    //         block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
+    //             player1.lastAttackTime == 0,
+    //         "Player is waiting"
+    //     );
 
-        player1.lastAttackTime = block.timestamp;
+    //     player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
 
-        if (player1Score > player2Score) {
-            player1.battleStats.wins += 1;
-            player2.battleStats.losses += 1;
+    //     if (player1Score > player2Score) {
+    //         player1.battleStats.wins += 1;
+    //         player2.battleStats.losses += 1;
 
-            // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
-            if (player2.exp >= EXP) {
-                player2.exp -= EXP;
-            } else {
-                player2.exp = 0;
-            }
+    //         // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
+    //         if (player2.exp >= EXP) {
+    //             player2.exp -= EXP;
+    //         } else {
+    //             player2.exp = 0;
+    //         }
 
-            player1.exp += EXP;
-            // player2.exp -= EXP;
-            _calculateLevel(player1);
-            _calculateLevel(player2);
+    //         player1.exp += EXP;
+    //         // player2.exp -= EXP;
+    //         // _calculateLevelPlayerAgainstPlayer(players[msg.sender], player2);
+    //         // _calculateLevel(player1);
+    //         // _calculateLevel(player2);
 
-            emit Main__PlayerAttackedPlayer(
-                msg.sender,
-                name_to_address[_player2.name],
-                player1.name
-            );
+    //         emit Main__PlayerAttackedPlayer(
+    //             msg.sender,
+    //             name_to_address[_player2.name],
+    //             player1.name
+    //         );
 
-            player2.alive = false;
+    //         player2.alive = false;
 
-            return player1.name;
-        } else if (player2Score > player1Score) {
-            // change battle stats
-            player1.battleStats.losses += 1;
-            player2.battleStats.wins += 1;
+    //         return player1.name;
+    //     } else if (player2Score > player1Score) {
+    //         // change battle stats
+    //         player1.battleStats.losses += 1;
+    //         player2.battleStats.wins += 1;
 
-            // if player1 exp is less than EXP, then it will be 0, otherwise it will be the difference
-            if (player1.exp >= EXP) {
-                player1.exp -= EXP;
-            } else {
-                player1.exp = 0;
-            }
+    //         // if player1 exp is less than EXP, then it will be 0, otherwise it will be the difference
+    //         if (player1.exp >= EXP) {
+    //             player1.exp -= EXP;
+    //         } else {
+    //             player1.exp = 0;
+    //         }
 
-            player2.exp += EXP;
-            // player1.exp -= EXP;
-            _calculateLevel(player1);
-            _calculateLevel(player2);
+    //         player2.exp += EXP;
+    //         // player1.exp -= EXP;
+    //         // _calculateLevel(player1);
+    //         // _calculateLevel(player2);
 
-            // ** player2.timeofWait  here is not necessary since it's p1 who is attacking
-            player1.alive = false;
+    //         // ** player2.timeofWait  here is not necessary since it's p1 who is attacking
+    //         player1.alive = false;
 
-            emit Main__PlayerAttackedPlayer(
-                msg.sender,
-                name_to_address[_player2.name],
-                player2.name
-            );
+    //         emit Main__PlayerAttackedPlayer(
+    //             msg.sender,
+    //             name_to_address[_player2.name],
+    //             player2.name
+    //         );
 
-            return player2.name;
-        } else {
-            // change battle stats
-            player1.battleStats.draws += 1;
-            player2.battleStats.draws += 1;
+    //         return player2.name;
+    //     } else {
+    //         // change battle stats
+    //         player1.battleStats.draws += 1;
+    //         player2.battleStats.draws += 1;
 
-            // this is horrible looking but works. refactor it later
-            if (player1.exp >= EXP) {
-                player1.exp -= EXP / 2;
-            } else {
-                player1.exp = 0;
-            }
+    //         // this is horrible looking but works. refactor it later
+    //         if (player1.exp >= EXP) {
+    //             player1.exp -= EXP / 2;
+    //         } else {
+    //             player1.exp = 0;
+    //         }
 
-            if (player2.exp >= EXP) {
-                player2.exp -= EXP / 2;
-            } else {
-                player2.exp = 0;
-            }
+    //         if (player2.exp >= EXP) {
+    //             player2.exp -= EXP / 2;
+    //         } else {
+    //             player2.exp = 0;
+    //         }
 
-            // player1.exp += EXP / 2;
-            // player2.exp += EXP / 2;
-            _calculateLevel(player1);
-            _calculateLevel(player2);
+    //         // player1.exp += EXP / 2;
+    //         // player2.exp += EXP / 2;
+    //         // _calculateLevel(player1);
+    //         // _calculateLevel(player2);
 
-            emit Main__PlayerAttackedPlayer(
-                msg.sender,
-                name_to_address[_player2.name],
-                "Draw"
-            );
+    //         emit Main__PlayerAttackedPlayer(
+    //             msg.sender,
+    //             name_to_address[_player2.name],
+    //             "Draw"
+    //         );
 
-            return "Draw";
-        }
-    }
+    //         return "Draw";
+    //     }
+    // }
 
     // TODO: this should be easy and very specific which monster, re do this with ifs/elses
     // since the front is defining every thing, it's better to do it here
@@ -318,7 +322,7 @@ contract Main {
         Creature memory creature = creatures[_creatureId];
 
         // check if creature exists
-        if (creature.id == 0) {
+        if (creature.id == 0 || creature.id > 5) {
             revert("Creature does not exist");
         }
 
@@ -330,6 +334,7 @@ contract Main {
         // the one who makes the more amount of points wins
         uint256 playerScore = _calculateScore(player.attributes);
         uint256 creatureScore = _calculateScore(creature.attributes);
+        console.log(playerScore, creatureScore);
 
         // i want a time to cool down so the player has to wait some time before attacking again
         require(
@@ -344,10 +349,8 @@ contract Main {
             player.battleStats.wins += 1;
 
             // kill creature and give exp to player and everything else
-            player.exp += creature.expGiven; // call a fn for this, calculate the exp to also update the level
-            _calculateLevel(player, creature);
-
-            // give gold according to the creature
+            _calculateLevel(FightResult.WIN, player, creature);
+            // give gold according to the creature. after maybe make a random amount of gold?
             player.gold += creatureAmountOfGold[creature.id];
 
             emit Main__PlayerAttackedCreature(
@@ -359,26 +362,20 @@ contract Main {
             return player.name;
         } else if (creatureScore > playerScore) {
             player.battleStats.losses += 1;
-
             player.alive = false;
-            // this is done so there is no underflow
-            if (creature.expGiven >= player.exp) {
-                player.exp = 0;
-            } else {
-                player.exp -= creature.expGiven;
-            }
-            // player.exp -= creature.expGiven;
-            _calculateLevel(player);
-
+            _calculateLevel(FightResult.LOSS, player, creature);
             emit Main__PlayerAttackedCreature(
                 msg.sender,
                 creature.id,
                 creature.name
             );
 
+            // TODO: should the player lose gold when he dies?
+
             return creature.name;
         } else {
             player.battleStats.draws += 1;
+            _calculateLevel(FightResult.DRAW, player, creature);
             emit Main__PlayerAttackedCreature(msg.sender, creature.id, "Draw");
 
             return "Draw";
@@ -457,16 +454,32 @@ contract Main {
         player.gold -= cost; // Deduct cost from player's gold
     }
 
+    enum FightResult {
+        LOSS,
+        WIN,
+        DRAW
+    }
+
     // @audit-info This is not taking into account the exp of the creature the player killed
+    // TODO: if the
     function _calculateLevel(
+        FightResult _fightResult,
         Player storage _player,
         Creature memory _creature
     ) private {
-        // Add the creature's expGiven to the player's current exp.
-        _player.exp += _creature.expGiven;
+        if (_fightResult == FightResult.WIN) {
+            _player.exp += _creature.expGiven;
+        } else if (_fightResult == FightResult.LOSS) {
+            if (_player.exp >= _creature.expGiven) {
+                _player.exp -= _creature.expGiven;
+            } else {
+                _player.exp = 0;
+            }
+        } else {
+            // DRAW nothing happens for now
+        }
 
         // Recalculate the player's level based on the new exp amount.
-        // This considers the difficulty of creatures defeated.
         uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
         _player.level = newLevel;
     }
@@ -474,15 +487,7 @@ contract Main {
     function _calculateLevelPlayerAgainstPlayer(
         Player storage _player,
         Player memory _player2
-    ) private {
-        // Add 1% of Player 2's exp to Player 1's current exp.
-        uint256 expToAdd = _player2.exp / 100;
-        _player.exp += expToAdd;
-
-        // Recalculate the player's level based on the new exp amount.
-        uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
-        _player.level = newLevel;
-    }
+    ) private {}
 
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
     function respawn() public {

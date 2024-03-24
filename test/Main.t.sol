@@ -55,18 +55,6 @@ contract CounterTest is Test {
         assertEq(timeToWaitToRespawn, 0);
     }
 
-    // function testAttackAnotherPlayer() public {
-    //     main.createPlayer("player1");
-    //     main.createPlayer("player2");
-
-    // }
-
-    function testAttackNonExistentPlayer() public {
-        main.createPlayer("player1");
-        // vm.expectRevert();
-        main.attackPlayer("player2");
-    }
-
     function testCreatePlayerTwice() public {
         vm.startPrank(player1);
         main.createPlayer("player1");
@@ -74,5 +62,47 @@ contract CounterTest is Test {
         vm.startPrank(player1);
         vm.expectRevert();
         main.createPlayer("player1");
+    }
+
+    function testAttackOneMonster() public {
+        vm.startPrank(player1);
+        skip(1000 seconds);
+        main.createPlayer("player1");
+
+        skip(4000 seconds);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+    }
+
+    // function testHello(uint16 _n) public {
+    //     vm.startPrank(player1);
+    //     main.createPlayer("player1");
+    //     skip(_n);
+    //     main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+    // }
+
+    modifier createPlayer() {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+        _;
+    }
+
+    function testTuningLuckParam() public createPlayer {
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        skip(13 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        skip(14 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        skip(15 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+    }
+
+    function testAttackMonsterTwice() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+
+        skip(1000 seconds);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
     }
 }
