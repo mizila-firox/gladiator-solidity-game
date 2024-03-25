@@ -86,6 +86,7 @@ contract CounterTest is Test {
         _;
     }
 
+    //
     function testTuningLuckParam() public createPlayer {
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
         skip(14 minutes);
