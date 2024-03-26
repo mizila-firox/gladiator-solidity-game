@@ -38,7 +38,6 @@ contract CounterTest is Test {
             string memory name,
             uint256 level,
             uint256 exp,
-            bool alive,
             uint256 gold,
             uint timeToWait,
             ,
@@ -51,7 +50,7 @@ contract CounterTest is Test {
         assertEq(name, "player1");
         assertEq(level, 1);
         assertEq(exp, 0);
-        assertEq(alive, true);
+        // assertEq(alive, true);
         assertEq(timeToWaitToRespawn, 0);
     }
 

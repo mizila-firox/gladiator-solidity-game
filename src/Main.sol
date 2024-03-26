@@ -21,7 +21,7 @@ contract Main is Test {
         string name;
         uint256 level;
         uint256 exp;
-        bool alive; // when it dies it loses exp
+        // bool alive; // when it dies it loses exp
         uint256 lastAttackTime;
         uint256 gold; // update this later to a struct containing more things, like items for example
         PlayerBattleStats battleStats;
@@ -132,7 +132,7 @@ contract Main is Test {
             _name,
             1, //level
             0, // exp
-            true, // alive
+            // true, // alive
             0, // gold
             0, // lastAttackTime
             _battleStats,
@@ -328,9 +328,9 @@ contract Main is Test {
             name_to_address[_player2.name]
         );
 
-        if (!player1.alive || !player2.alive) {
-            revert("All players must be alive");
-        }
+        // if (!player1.alive || !player2.alive) {
+        //     revert("All players must be alive");
+        // }
 
         // calculates the fight
         uint256 player1Score = _calculateScore(player1.attributes);
@@ -404,9 +404,9 @@ contract Main is Test {
         }
 
         // is player alive?
-        if (!player.alive) {
-            revert("Player is dead");
-        }
+        // if (!player.alive) {
+        //     revert("Player is dead");
+        // }
 
         // the one who makes the more amount of points wins
         uint256 playerScore = _calculateScore(player.attributes);
@@ -439,7 +439,7 @@ contract Main is Test {
             return player.name;
         } else if (creatureScore > playerScore) {
             player.battleStats.losses += 1;
-            player.alive = false;
+            // player.alive = false;
             _calculateLevel(FightResult.LOSS, player, creature);
             emit Main__PlayerAttackedCreature(
                 msg.sender,
@@ -667,7 +667,7 @@ contract Main is Test {
                 _player2.exp = 0;
             }
 
-            _player2.alive = false;
+            // _player2.alive = false;
             _player2.battleStats.losses += 1;
             _player.battleStats.wins += 1;
             // _calculateLevel(player1);
@@ -681,7 +681,7 @@ contract Main is Test {
                 _player.exp = 0;
             }
 
-            _player.alive = false;
+            // _player.alive = false;
             _player.battleStats.losses += 1;
             _player2.battleStats.wins += 1;
             // _calculateLevel(player1);
@@ -703,20 +703,20 @@ contract Main is Test {
     }
 
     // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
-    function respawn() public {
-        // give the player a cooldown to respawn, he can get back quickly by Ruby
-        Player storage player = players[msg.sender];
-        require(!player.alive, "Player is already alive");
+    // function respawn() public {
+    //     // give the player a cooldown to respawn, he can get back quickly by Ruby
+    //     Player storage player = players[msg.sender];
+    //     require(!player.alive, "Player is already alive");
 
-        //checking if X minutes have passed since the player died
-        // for now this will always pass since this is 0. need to be implemented when the player dies
-        require(
-            block.timestamp >= player.timeToWaitToRespawn,
-            "You need to wait 1 minute to respawn"
-        );
-        player.alive = true;
-        emit Main__PlayerRespawned(msg.sender);
-    }
+    //     //checking if X minutes have passed since the player died
+    //     // for now this will always pass since this is 0. need to be implemented when the player dies
+    //     require(
+    //         block.timestamp >= player.timeToWaitToRespawn, // @audit-info this timeToWaitToRespawn is not being updated anywhere, but since it's 0 default it will always pass
+    //         "You need to wait 1 minute to respawn"
+    //     );
+    //     player.alive = true;
+    //     emit Main__PlayerRespawned(msg.sender);
+    // }
 
     // TODO:
     // CRETE THE SCOREBOARD

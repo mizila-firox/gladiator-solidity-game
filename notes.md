@@ -10,6 +10,10 @@ gladiator is a pvp game
 
   for now the score is the counting the same for both monsters and players.
 
+# how should the respawning work?
+- [] should the player lose gold?
+- 
+
 # goals
 
 # pages
@@ -21,6 +25,7 @@ gladiator is a pvp game
 [ ] add DEFENSE, either to skills, armors or both
 
 # ideas v1
+[x] for now lets remove the respawn system since it just adds unnecessary components to the game.
 [ ] adding a factor of lucky is imperative for battles because otherwise people can know who is going to win before the battle even starts. 
 [ ] set all the attributes weights the same for now?
 [ ] should the player lose gold?
