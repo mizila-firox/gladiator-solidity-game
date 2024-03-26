@@ -42,8 +42,7 @@ contract CounterTest is Test {
             uint timeToWait,
             ,
             ,
-            ,
-            uint256 timeToWaitToRespawn
+
         ) = main.players(player1);
         assertEq(main.quantity_players(), 1);
         assertEq(id, 1);
@@ -51,7 +50,6 @@ contract CounterTest is Test {
         assertEq(level, 1);
         assertEq(exp, 0);
         // assertEq(alive, true);
-        assertEq(timeToWaitToRespawn, 0);
     }
 
     function testCreatePlayerTwice() public {
@@ -121,6 +119,18 @@ contract CounterTest is Test {
         skip(10 minutes);
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
         _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
 
         main.improveAttribute(1);
         _getStatus();
@@ -129,6 +139,13 @@ contract CounterTest is Test {
         main.improveAttribute(2);
         _getStatus();
         main.improveAttribute(3);
+        _getStatus();
+        main.improveAttribute(3);
+        _getStatus();
+
+        // attack a stronger monster
+        skip(11 minutes);
+        main.determineWinnerWithCreature(3); // 3 == Dragon
         _getStatus();
     }
 

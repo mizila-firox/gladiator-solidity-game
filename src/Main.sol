@@ -30,7 +30,7 @@ contract Main is Test {
         // address[] creaturesAttacked;??
         // address of owner to make it simpler instead of having to search every time
         address playerAddress;
-        uint256 timeToWaitToRespawn;
+        // uint256 timeToWaitToRespawn;
     }
 
     struct Attributes {
@@ -63,7 +63,7 @@ contract Main is Test {
     mapping(address => mapping(address => uint))
         public timeToWaitToAttackAnotherPlayer; // time to wait to attack another player
 
-    address public admin;
+    address public admin; // for banning cheaters only? if so add a ban function
 
     // ==============================================
     // ============== ERRORS ========================
@@ -132,13 +132,12 @@ contract Main is Test {
             _name,
             1, //level
             0, // exp
+            0, // lastAttackTime
             // true, // alive
             0, // gold
-            0, // lastAttackTime
             _battleStats,
             _attributes,
-            msg.sender,
-            0
+            msg.sender
         );
 
         emit Main__PlayerCreated(msg.sender, _name);
@@ -181,6 +180,8 @@ contract Main is Test {
         return score;
     }
 
+    // @audit here we are verifying and setting a cooldown for the player to attack another player,
+    // BUT the player can infinitely attack other players, so lastAttackTime could be updated here too, or only that
     function _isAllowedToAttackAnotherPlayer(
         address _player1,
         address _player2
@@ -192,9 +193,20 @@ contract Main is Test {
             "You need to wait 24 hours to attack this player again!"
         );
 
+        // redundant too, but read the end of this function
+        require(
+            block.timestamp >=
+                players[_player1].lastAttackTime + MIN_TIME_WAITING ||
+                players[_player1].lastAttackTime == 0,
+            "Player is waiting"
+        );
+
         timeToWaitToAttackAnotherPlayer[_player1][_player2] =
             block.timestamp +
             24 hours;
+
+        // these last two lines are kind of redundant, remove one later after testing which is better
+        players[_player1].lastAttackTime = block.timestamp;
 
         return true;
     }
@@ -317,16 +329,13 @@ contract Main is Test {
 
     // is this the correct one?
     function determineWinnerPlayers(
-        Player memory _player2
+        string memory _player2
     ) private returns (string memory) {
         Player storage player1 = players[msg.sender]; // [DO IT LATER] should it use msgSender library in case of somone is subzidizing the txs?
-        Player storage player2 = players[name_to_address[_player2.name]];
+        Player storage player2 = players[name_to_address[_player2]];
 
         // checking 24 hours to attack another player
-        _isAllowedToAttackAnotherPlayer(
-            msg.sender,
-            name_to_address[_player2.name]
-        );
+        _isAllowedToAttackAnotherPlayer(msg.sender, name_to_address[_player2]);
 
         // if (!player1.alive || !player2.alive) {
         //     revert("All players must be alive");
@@ -338,24 +347,26 @@ contract Main is Test {
 
         // i want a time to cool down so the player has to wait some time before attacking again
         // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
-        require(
-            block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
-                player1.lastAttackTime == 0,
-            "Player is waiting"
-        );
 
-        player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
+        // REDUNDANT TOO, BEING CHECKED IN THE FUNCTION ABOVE
+        // require(
+        //     block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
+        //         player1.lastAttackTime == 0,
+        //     "Player is waiting"
+        // );
+
+        // player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
 
         if (player1Score > player2Score) {
             _calculateLevelPlayerAgainstPlayer(
                 FightResult.WIN,
                 player1,
-                _player2
+                player2
             );
 
             emit Main__PlayerAttackedPlayer(
                 msg.sender,
-                name_to_address[_player2.name],
+                name_to_address[_player2],
                 player1.name
             );
 
@@ -365,12 +376,12 @@ contract Main is Test {
             _calculateLevelPlayerAgainstPlayer(
                 FightResult.LOSS,
                 player1,
-                _player2
+                player2
             );
 
             emit Main__PlayerAttackedPlayer(
                 msg.sender,
-                name_to_address[_player2.name],
+                name_to_address[_player2],
                 player2.name
             );
 
@@ -379,12 +390,12 @@ contract Main is Test {
             _calculateLevelPlayerAgainstPlayer(
                 FightResult.DRAW,
                 player1,
-                _player2
+                player2
             );
 
             emit Main__PlayerAttackedPlayer(
                 msg.sender,
-                name_to_address[_player2.name],
+                name_to_address[_player2],
                 "Draw"
             );
 
