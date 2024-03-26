@@ -86,6 +86,33 @@ contract CounterTest is Test {
         _;
     }
 
+    function _getStatus() private {
+        // (uint256 id, , , , , , , main.Player, , , ) = main.get_players(player1);
+        Main.Player memory player = main.get_players(player1);
+        uint256 wins = player.battleStats.wins;
+        uint256 losses = player.battleStats.losses;
+        uint256 draws = player.battleStats.draws;
+        uint256 gold = player.gold;
+
+        console.log("wins:", wins);
+        console.log("losses:", losses);
+        console.log("draws:", draws);
+        console.log("GOLD:", gold);
+        console.log("-------------");
+    }
+
+    function testAttackOneMonsterWithPlayer() public createPlayer {
+        _getStatus();
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+    }
+
     //
     function testTuningLuckParam() public createPlayer {
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature

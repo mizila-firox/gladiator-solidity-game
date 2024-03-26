@@ -166,7 +166,8 @@ contract Main is Test {
         Attributes memory attributes
     ) private returns (uint256) {
         // Define weights for each attribute
-        uint256 weightLuck = 2; // this luck is random and will be assigned each time the player attack.
+        // uint256 weightLuck = 2; // this luck is random and will be assigned each time the player attack.
+        uint256 weightLuck = 0; //@audit-info leave 0 for testing so the player can never loose for like this for the GOBLIN  // this luck is random and will be assigned each time the player attack.
         uint256 weightStrength = 1; // idealy these would be random within a range
         uint256 weightAgility = 1;
         uint256 weightIntelligence = 1;
