@@ -568,6 +568,8 @@ contract Main is Test {
         Player storage player = players[msg.sender];
         uint cost;
 
+        require(_attribute >= 1 && _attribute <= 3, "Invalid attribute"); // 1 = strength, 2 = agility, 3 = intelligence
+
         // double the cost every time
         if (_attribute == 1) {
             cost = 1 << player.attributes.strength; // Calculate cost as 2^strength

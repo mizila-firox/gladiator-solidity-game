@@ -99,6 +99,11 @@ contract CounterTest is Test {
         console.log("draws:", draws);
         console.log("GOLD:", gold);
         console.log("-------------");
+
+        console.log("strength:", player.attributes.strength);
+        console.log("agility:", player.attributes.agility);
+        console.log("intelligence:", player.attributes.intelligence);
+        console.log("====================================");
     }
 
     function testAttackOneMonsterWithPlayer() public createPlayer {
@@ -110,6 +115,21 @@ contract CounterTest is Test {
         _getStatus();
         skip(10 minutes);
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+        skip(10 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+        _getStatus();
+
+        main.improveAttribute(1);
+        _getStatus();
+        main.improveAttribute(1);
+        _getStatus();
+        main.improveAttribute(2);
+        _getStatus();
+        main.improveAttribute(3);
         _getStatus();
     }
 
