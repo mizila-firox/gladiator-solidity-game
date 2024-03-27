@@ -167,10 +167,10 @@ contract Main is Test {
     ) private returns (uint256) {
         // Define weights for each attribute
         // uint256 weightLuck = 2; // this luck is random and will be assigned each time the player attack.
-        uint256 weightLuck = 0; //@audit-info leave 0 for testing so the player can never loose for like this for the GOBLIN  // this luck is random and will be assigned each time the player attack.
-        uint256 weightStrength = 1; // idealy these would be random within a range
-        uint256 weightAgility = 1;
-        uint256 weightIntelligence = 1;
+        uint256 weightLuck = 1; //@audit-info leave 0 for testing so the player can never loose for like this for the GOBLIN  // this luck is random and will be assigned each time the player attack.
+        uint256 weightStrength = 2; // idealy these would be random within a range
+        uint256 weightAgility = 2;
+        uint256 weightIntelligence = 2;
 
         uint256 luck = getPseudoRandomNumber();
 
@@ -337,6 +337,12 @@ contract Main is Test {
 
         // checking 24 hours to attack another player
         _isAllowedToAttackAnotherPlayer(msg.sender, name_to_address[_player2]);
+
+        // PLAYER CANT ATTACK HIMSELF
+        require(
+            msg.sender != name_to_address[_player2],
+            "Player can't attack himself"
+        );
 
         // if (!player1.alive || !player2.alive) {
         //     revert("All players must be alive");
@@ -680,8 +686,8 @@ contract Main is Test {
             }
 
             // _player2.alive = false;
-            _player2.battleStats.losses += 1;
             _player.battleStats.wins += 1;
+            _player2.battleStats.losses += 1;
             // _calculateLevel(player1);
             // _calculateLevel(player2);
 

@@ -192,7 +192,46 @@ contract CounterTest is Test {
         _getStatus2("player2");
     }
 
-    function _getStatus2(string memory __player) private {
+    function testAttackMonsterImproveThenAnotherPlayer2() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+
+        skip(10 minutes); // do i need to skip time if i want to attack a player after attacking a monster?
+        // improve attribute
+        main.improveAttribute(1);
+
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        _getStatus2("player1");
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        main.determineWinnerWithCreature(1);
+
+        main.improveAttribute(2); // improve agility
+        console.log("#######################");
+        _getStatus2("player2");
+        console.log("#######################");
+        //
+
+        // vm.startPrank(player1);
+        // main.attackPlayer("player2");
+
+        vm.startPrank(player1);
+        skip(24 hours);
+        main.attackPlayer("player2");
+
+        // print status
+        console.log("P1:");
+        _getStatus2("player1");
+        console.log("P2:");
+        _getStatus2("player2");
+    }
+
+    function _getStatus2(string memory __player) private view {
         Main.Player memory player = main.get_players(
             main.name_to_address(__player)
         );
