@@ -149,6 +149,68 @@ contract CounterTest is Test {
         _getStatus();
     }
 
+    function testAttackAnotherPlayer() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        vm.startPrank(player1);
+        main.attackPlayer("player2");
+
+        // print status
+        _getStatus2("player1");
+        _getStatus2("player2");
+    }
+
+    function testAttackMonsterImproveThenAnotherPlayer() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+
+        skip(10 minutes); // do i need to skip time if i want to attack a player after attacking a monster?
+        // improve attribute
+        main.improveAttribute(1);
+
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        _getStatus2("player1");
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        vm.startPrank(player1);
+        main.attackPlayer("player2");
+
+        skip(24 hours);
+        main.attackPlayer("player2");
+
+        // print status
+        _getStatus2("player1");
+        _getStatus2("player2");
+    }
+
+    function _getStatus2(string memory __player) private {
+        Main.Player memory player = main.get_players(
+            main.name_to_address(__player)
+        );
+
+        uint256 exp = player.exp;
+        uint256 wins = player.battleStats.wins;
+        uint256 losses = player.battleStats.losses;
+        uint256 draws = player.battleStats.draws;
+        uint256 gold = player.gold;
+
+        console.log("exp:", exp);
+        console.log("wins:", wins);
+        console.log("losses:", losses);
+        console.log("draws:", draws);
+        console.log("GOLD:", gold);
+        console.log("-------------");
+    }
+
     //
     function testTuningLuckParam() public createPlayer {
         main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature

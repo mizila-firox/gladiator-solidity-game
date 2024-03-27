@@ -13,6 +13,7 @@ contract Main is Test {
     uint256 public num = 777;
     uint256 constant MIN_TIME_WAITING = 30 seconds;
     uint256 constant RESPAWN_WAITING = 1 minutes;
+    uint256 constant HOURS_TO_ATTACK_PLAYER_AGAIN = 1 hours;
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
 
@@ -143,10 +144,10 @@ contract Main is Test {
         emit Main__PlayerCreated(msg.sender, _name);
     }
 
-    // function attackPlayer(string memory _player) public {
-    //     Player memory _player2 = players[name_to_address[_player]];
-    //     determineWinnerPlayers(_player2);
-    // }
+    function attackPlayer(string memory _player2) public {
+        // Player memory _player2 = players[name_to_address[_player]];
+        determineWinnerPlayers(_player2);
+    }
 
     uint256 private nonce = 0;
 
@@ -190,7 +191,7 @@ contract Main is Test {
         require(
             block.timestamp >=
                 timeToWaitToAttackAnotherPlayer[_player1][_player2],
-            "You need to wait 24 hours to attack this player again!"
+            "You need to wait X hours to attack this player again!"
         );
 
         // redundant too, but read the end of this function
@@ -203,7 +204,7 @@ contract Main is Test {
 
         timeToWaitToAttackAnotherPlayer[_player1][_player2] =
             block.timestamp +
-            24 hours;
+            HOURS_TO_ATTACK_PLAYER_AGAIN;
 
         // these last two lines are kind of redundant, remove one later after testing which is better
         players[_player1].lastAttackTime = block.timestamp;
@@ -655,7 +656,7 @@ contract Main is Test {
     function _calculateLevelPlayerAgainstPlayer(
         FightResult _fightResult,
         Player storage _player,
-        Player memory _player2
+        Player storage _player2
     ) private {
         if (_fightResult == FightResult.WIN) {
             // updates both players exp, if the player2 exp is less than the exp given, it will be 0 so it does not go negative
@@ -688,6 +689,15 @@ contract Main is Test {
         } else if (_fightResult == FightResult.LOSS) {
             if (_player.exp >= EXP) {
                 _player.exp -= EXP;
+
+                // remove gold from p1 and give 10gold to p2
+                if (_player.gold >= 10) {
+                    _player.gold -= 10;
+                    _player2.gold += 10;
+                } else {
+                    _player.gold = 0;
+                    _player2.gold += _player.gold;
+                }
             } else {
                 _player.exp = 0;
             }
@@ -701,6 +711,8 @@ contract Main is Test {
             // IF WE INCREASE PLAYER2 EXP BY HIM BEING ATTACKED, IT CAN BE USED TO GAME THE SYSTEM, SO WE WILL NOT INCREASE IT
         } else {
             // DRAW nothing happens for now
+            _player.battleStats.draws += 1;
+            _player2.battleStats.draws += 1;
         }
 
         // CALCULATE THIS PART BELLOW IN ANOTHER FN????!!!!
