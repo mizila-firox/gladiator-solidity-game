@@ -12,11 +12,12 @@ contract Main is Test {
 
     uint256 public num = 777;
 
-    uint256 constant MIN_TIME_WAITING = 30 seconds;
-    uint256 constant RESPAWN_WAITING = 1 minutes;
-    uint256 constant HOURS_TO_ATTACK_PLAYER_AGAIN = 1 hours;
+    uint256 constant MIN_TIME_WAITING_FOR_ALL_PLAYERS = 30 seconds;
+    uint256 constant HOURS_TO_ATTACK_SAME_PLAYER_AGAIN = 1 hours;
+    uint256 public minGoldToTake = 10;
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
+    uint256 private nonce = 0;
 
     struct Player {
         uint256 id;
@@ -32,7 +33,6 @@ contract Main is Test {
         // address[] creaturesAttacked;??
         // address of owner to make it simpler instead of having to search every time
         address playerAddress;
-        // uint256 timeToWaitToRespawn;
     }
 
     struct Attributes {
@@ -160,8 +160,6 @@ contract Main is Test {
         determineWinnerPlayers(_player2);
     }
 
-    uint256 private nonce = 0;
-
     // this is a pseudo random number, it's not secure, but it's good enough for now
     function getPseudoRandomNumber() public returns (uint256) {
         uint256 randomNumber = (uint256(
@@ -192,161 +190,45 @@ contract Main is Test {
         return score;
     }
 
-    // @audit here we are verifying and setting a cooldown for the player to attack another player,
-    // BUT the player can infinitely attack other players, so lastAttackTime could be updated here too, or only that
+    // here we are verifying and setting a cooldown for the player to attack another player,
+    // player can attack different players every X time [shorter period] but must wait more time to attack the same player again
     function _isAllowedToAttackAnotherPlayer(
         address _player1,
         address _player2
     ) private returns (bool) {
-        // check if 24 hours since last attack to the player 2 was passed
+        // this one checks for p1 cool down for a SPECIFIC players
         require(
             block.timestamp >=
                 timeToWaitToAttackAnotherPlayer[_player1][_player2],
-            "You need to wait X hours to attack this player again!"
+            "You need to wait X time to attack this player again"
         );
 
-        // redundant too, but read the end of this function
+        // this one checks for p1 cool down for all players
         require(
             block.timestamp >=
-                players[_player1].lastAttackTime + MIN_TIME_WAITING ||
+                players[_player1].lastAttackTime +
+                    MIN_TIME_WAITING_FOR_ALL_PLAYERS ||
                 players[_player1].lastAttackTime == 0,
             "Player is waiting"
         );
 
         timeToWaitToAttackAnotherPlayer[_player1][_player2] =
             block.timestamp +
-            HOURS_TO_ATTACK_PLAYER_AGAIN;
+            HOURS_TO_ATTACK_SAME_PLAYER_AGAIN;
 
-        // these last two lines are kind of redundant, remove one later after testing which is better
         players[_player1].lastAttackTime = block.timestamp;
 
         return true;
     }
 
-    // function determineWinnerPlayers(
-    //     Player memory _player2
-    // ) private returns (string memory) {
-    //     Player storage player1 = players[msg.sender]; // [DO IT LATER] should it use msgSender library in case of somone is subzidizing the txs?
-    //     Player storage player2 = players[name_to_address[_player2.name]];
-
-    //     // checking 24 hours to attack another player
-    //     _isAllowedToAttackAnotherPlayer(
-    //         msg.sender,
-    //         name_to_address[_player2.name]
-    //     );
-
-    //     if (!player1.alive || !player2.alive) {
-    //         revert("All players must be alive");
-    //     }
-
-    //     // calculates the fight
-    //     uint256 player1Score = _calculateScore(player1.attributes);
-    //     uint256 player2Score = _calculateScore(player2.attributes);
-
-    //     // i want a time to cool down so the player has to wait some time before attacking again
-    //     // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
-    //     require(
-    //         block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
-    //             player1.lastAttackTime == 0,
-    //         "Player is waiting"
-    //     );
-
-    //     player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
-
-    //     if (player1Score > player2Score) {
-    //         player1.battleStats.wins += 1;
-    //         player2.battleStats.losses += 1;
-
-    //         // if player2 exp is less than EXP, then it will be 0, otherwise it will be the difference
-    //         if (player2.exp >= EXP) {
-    //             player2.exp -= EXP;
-    //         } else {
-    //             player2.exp = 0;
-    //         }
-
-    //         player1.exp += EXP;
-    //         // player2.exp -= EXP;
-    //         // _calculateLevelPlayerAgainstPlayer(players[msg.sender], player2);
-    //         // _calculateLevel(player1);
-    //         // _calculateLevel(player2);
-
-    //         emit Main__PlayerAttackedPlayer(
-    //             msg.sender,
-    //             name_to_address[_player2.name],
-    //             player1.name
-    //         );
-
-    //         player2.alive = false;
-
-    //         return player1.name;
-    //     } else if (player2Score > player1Score) {
-    //         // change battle stats
-    //         player1.battleStats.losses += 1;
-    //         player2.battleStats.wins += 1;
-
-    //         // if player1 exp is less than EXP, then it will be 0, otherwise it will be the difference
-    //         if (player1.exp >= EXP) {
-    //             player1.exp -= EXP;
-    //         } else {
-    //             player1.exp = 0;
-    //         }
-
-    //         player2.exp += EXP;
-    //         // player1.exp -= EXP;
-    //         // _calculateLevel(player1);
-    //         // _calculateLevel(player2);
-
-    //         // ** player2.timeofWait  here is not necessary since it's p1 who is attacking
-    //         player1.alive = false;
-
-    //         emit Main__PlayerAttackedPlayer(
-    //             msg.sender,
-    //             name_to_address[_player2.name],
-    //             player2.name
-    //         );
-
-    //         return player2.name;
-    //     } else {
-    //         // change battle stats
-    //         player1.battleStats.draws += 1;
-    //         player2.battleStats.draws += 1;
-
-    //         // this is horrible looking but works. refactor it later
-    //         if (player1.exp >= EXP) {
-    //             player1.exp -= EXP / 2;
-    //         } else {
-    //             player1.exp = 0;
-    //         }
-
-    //         if (player2.exp >= EXP) {
-    //             player2.exp -= EXP / 2;
-    //         } else {
-    //             player2.exp = 0;
-    //         }
-
-    //         // player1.exp += EXP / 2;
-    //         // player2.exp += EXP / 2;
-    //         // _calculateLevel(player1);
-    //         // _calculateLevel(player2);
-
-    //         emit Main__PlayerAttackedPlayer(
-    //             msg.sender,
-    //             name_to_address[_player2.name],
-    //             "Draw"
-    //         );
-
-    //         return "Draw";
-    //     }
-    // }
-
     // is this the correct one?
     function determineWinnerPlayers(
         string memory _player2
     ) private returns (string memory) {
-        Player storage player1 = players[msg.sender]; // [DO IT LATER] should it use msgSender library in case of somone is subzidizing the txs?
+        Player storage player1 = players[msg.sender];
         Player storage player2 = players[name_to_address[_player2]];
 
-        // checking 24 hours to attack another player
+        // checking X hours to attack another player
         _isAllowedToAttackAnotherPlayer(msg.sender, name_to_address[_player2]);
 
         // PLAYER CANT ATTACK HIMSELF
@@ -355,20 +237,17 @@ contract Main is Test {
             "Player can't attack himself"
         );
 
-        // if (!player1.alive || !player2.alive) {
-        //     revert("All players must be alive");
-        // }
-
         // calculates the fight
         uint256 player1Score = _calculateScore(player1.attributes);
         uint256 player2Score = _calculateScore(player2.attributes);
 
+        // heree
         // i want a time to cool down so the player has to wait some time before attacking again
         // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
 
         // REDUNDANT TOO, BEING CHECKED IN THE FUNCTION ABOVE
         // require(
-        //     block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING ||
+        //     block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING_FOR_ALL_PLAYERS ||
         //         player1.lastAttackTime == 0,
         //     "Player is waiting"
         // );
@@ -445,7 +324,8 @@ contract Main is Test {
 
         // i want a time to cool down so the player has to wait some time before attacking again
         require(
-            block.timestamp >= player.lastAttackTime + MIN_TIME_WAITING ||
+            block.timestamp >=
+                player.lastAttackTime + MIN_TIME_WAITING_FOR_ALL_PLAYERS ||
                 player.lastAttackTime == 0,
             "Player is waiting"
         );
@@ -488,80 +368,6 @@ contract Main is Test {
         }
     }
 
-    // CHECK THIS FUNCTION TO SEE IF SOME IMPORTANT LOGIC WAS FORGOTEN HERE.
-    // function determineWinnerWithPlayer(
-    //     FightResult _fightResult,
-    //     address _player1,
-    //     address _player2
-    // ) public returns (string memory) {
-    //     Player storage player = players[msg.sender];
-    //     Creature memory creature = creatures[_creatureId];
-
-    //     // check if creature exists
-    //     if (creature.id == 0 || creature.id > 5) {
-    //         revert("Creature does not exist");
-    //     }
-
-    //     // is player alive?
-    //     if (!player.alive) {
-    //         revert("Player is dead");
-    //     }
-
-    //     // the one who makes the more amount of points wins
-    //     uint256 playerScore = _calculateScore(player.attributes);
-    //     uint256 creatureScore = _calculateScore(creature.attributes);
-    //     console.log(playerScore, creatureScore);
-
-    //     // i want a time to cool down so the player has to wait some time before attacking again
-    //     require(
-    //         block.timestamp >= player.lastAttackTime + MIN_TIME_WAITING ||
-    //             player.lastAttackTime == 0,
-    //         "Player is waiting"
-    //     );
-
-    //     player.lastAttackTime = block.timestamp;
-
-    //     if (playerScore > creatureScore) {
-    //         player.battleStats.wins += 1;
-
-    //         // kill creature and give exp to player and everything else
-    //         _calculateLevel(FightResult.WIN, player, creature);
-    //         // give gold according to the creature. after maybe make a random amount of gold?
-    //         player.gold += creatureAmountOfGold[creature.id];
-
-    //         emit Main__PlayerAttackedCreature(
-    //             msg.sender,
-    //             creature.id,
-    //             player.name
-    //         );
-
-    //         return player.name;
-    //     } else if (creatureScore > playerScore) {
-    //         player.battleStats.losses += 1;
-    //         player.alive = false;
-    //         _calculateLevel(FightResult.LOSS, player, creature);
-    //         emit Main__PlayerAttackedCreature(
-    //             msg.sender,
-    //             creature.id,
-    //             creature.name
-    //         );
-
-    //         // TODO: should the player lose gold when he dies?
-    //         return creature.name;
-    //     } else {
-    //         player.battleStats.draws += 1;
-    //         _calculateLevel(FightResult.DRAW, player, creature);
-    //         emit Main__PlayerAttackedCreature(msg.sender, creature.id, "Draw");
-
-    //         return "Draw";
-    //     }
-    // }
-
-    // 1. Goblin
-    // 2. Orc
-    // 3. Troll
-    // 4. Dragon
-    // 5. Hydra
     // @audit-ok
     function _creatingInitialCreatures() private {
         Attributes memory _attributes1 = Attributes(0, 0, 0);
@@ -678,9 +484,7 @@ contract Main is Test {
     ) private {
         if (_fightResult == FightResult.WIN) {
             // updates both players exp, if the player2 exp is less than the exp given, it will be 0 so it does not go negative
-            // _player.exp += EXP;
 
-            // TODO: should it take some gold from the player2?
             // this is taking 10 gold from player2 and giving it to player1, but it can be changed later according to the amount of gold the player being attacked has
             uint256 player2Gold = _player2.gold;
             if (player2Gold >= 10) {
@@ -697,11 +501,8 @@ contract Main is Test {
                 _player2.exp = 0;
             }
 
-            // _player2.alive = false;
             _player.battleStats.wins += 1;
             _player2.battleStats.losses += 1;
-            // _calculateLevel(player1);
-            // _calculateLevel(player2);
 
             //
         } else if (_fightResult == FightResult.LOSS) {
@@ -720,11 +521,8 @@ contract Main is Test {
                 _player.exp = 0;
             }
 
-            // _player.alive = false;
             _player.battleStats.losses += 1;
             _player2.battleStats.wins += 1;
-            // _calculateLevel(player1);
-            // _calculateLevel(player2);
 
             // IF WE INCREASE PLAYER2 EXP BY HIM BEING ATTACKED, IT CAN BE USED TO GAME THE SYSTEM, SO WE WILL NOT INCREASE IT
         } else {
@@ -742,35 +540,6 @@ contract Main is Test {
         uint256 newLevel2 = Math.sqrt(_player2.exp / 1000) + 1;
         _player2.level = newLevel2;
     }
-
-    // [not sure if follow with this logic of alive and dead, maybe there is a better way] this function is useful because as long as you are dead you can't be attacked.
-    // function respawn() public {
-    //     // give the player a cooldown to respawn, he can get back quickly by Ruby
-    //     Player storage player = players[msg.sender];
-    //     require(!player.alive, "Player is already alive");
-
-    //     //checking if X minutes have passed since the player died
-    //     // for now this will always pass since this is 0. need to be implemented when the player dies
-    //     require(
-    //         block.timestamp >= player.timeToWaitToRespawn, // @audit-info this timeToWaitToRespawn is not being updated anywhere, but since it's 0 default it will always pass
-    //         "You need to wait 1 minute to respawn"
-    //     );
-    //     player.alive = true;
-    //     emit Main__PlayerRespawned(msg.sender);
-    // }
-
-    // TODO:
-    // CRETE THE SCOREBOARD
-    // EMIT EVENTS FOR EVERYTHING THAT HAPPENS
-    //[[[ upgrade attributes]]]
-
-    // [ ] make the attacker loses gold when he is defeated
-    // [ ] add 2  different timers, one for a player to attack different players and one longer for the same player
-
-    // boost?
-    // [so it will be reusable] create a function to update time to wait for both players and creaters
-    // all events
-    // respawn after death
 
     // this function works better than the generated getter `player`
     function get_players(address _address) public view returns (Player memory) {

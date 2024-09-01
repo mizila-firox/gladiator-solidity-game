@@ -329,4 +329,48 @@ contract CounterTest is Test {
 
         _getStatus2("player1");
     }
+
+    function testAttackSamePlayer() public {
+        vm.startPrank(player3);
+        main.createPlayer("player3");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        // p1 attacks p2
+        main.attackPlayer("player2");
+
+        vm.warp(31 seconds);
+        // p1 attacks p3
+        main.attackPlayer("player3");
+    }
+
+    // make one player have gold and be attacked by another player so the other player can take the gold
+    function testAttackMonsterToGetGold() public {
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        main.determineWinnerWithCreature(1); // 1 == Globin the weakest creature
+        skip(11 minutes);
+        main.determineWinnerWithCreature(1); // 1 == Globin the weakest creature
+
+        _getStatus2("player1");
+        _getStatus2("player2");
+
+        console.log("======================");
+        console.log("AFTER BEING ATTACKED");
+        console.log("======================");
+
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        skip(10 minutes);
+        main.attackPlayer("player2");
+
+        _getStatus2("player1");
+        _getStatus2("player2");
+    }
 }
