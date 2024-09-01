@@ -83,7 +83,7 @@ contract CounterTest is Test {
         _;
     }
 
-    function _getStatus() private {
+    function _getStatus() private view {
         // (uint256 id, , , , , , , main.Player, , , ) = main.get_players(player1);
         Main.Player memory player = main.get_players(player1);
         uint256 wins = player.battleStats.wins;
@@ -147,6 +147,53 @@ contract CounterTest is Test {
         skip(11 minutes);
         main.determineWinnerWithCreature(3); // 3 == Dragon
         _getStatus();
+    }
+
+    function testAttacks() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        vm.startPrank(player1);
+        main.attackPlayer("player2");
+
+        // print status
+        _getStatus2("player1");
+        _getStatus2("player2");
+
+        vm.warp(2 hours);
+
+        console.log("================");
+        vm.startPrank(player2);
+        main.attackPlayer("player1");
+
+        _getStatus2("player1");
+        _getStatus2("player2");
+    }
+
+    function testAttackAnotherPlayerMoreThanOnce() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+
+        vm.startPrank(player1);
+        main.attackPlayer("player2");
+
+        // print status
+        _getStatus2("player1");
+        _getStatus2("player2");
+
+        vm.warp(2 hours);
+
+        console.log("================");
+        main.attackPlayer("player2");
+
+        _getStatus2("player1");
+        _getStatus2("player2");
     }
 
     function testAttackAnotherPlayer() public {
@@ -267,7 +314,20 @@ contract CounterTest is Test {
 
         skip(10 minutes);
 
-        string memory result2 = main.determineWinnerWithCreature(3); // 3 == Dragon,  the strongest creature
+        string memory result2 = main.determineWinnerWithCreature(5); // 5 == Hydra,  the strongest creature
+
         console.log("winner:", result2);
+    }
+
+    function testAttackMonsterTest() external createPlayer {
+        string memory result = main.determineWinnerWithCreature(1); // 1 == Globin the weakest creature
+        skip(1 minutes); // 30 seconds is enough
+        string memory result2 = main.determineWinnerWithCreature(1); // 2 == Orc,  the second weakest creature
+        skip(1 minutes); // 30 seconds is enough
+        string memory result3 = main.determineWinnerWithCreature(1); // 2 == Orc,  the second weakest creature
+
+        console.log("winner:", result3);
+
+        _getStatus2("player1");
     }
 }

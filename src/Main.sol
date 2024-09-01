@@ -11,6 +11,7 @@ contract Main is Test {
     // ============== VARIABLES =====================
 
     uint256 public num = 777;
+
     uint256 constant MIN_TIME_WAITING = 30 seconds;
     uint256 constant RESPAWN_WAITING = 1 minutes;
     uint256 constant HOURS_TO_ATTACK_PLAYER_AGAIN = 1 hours;
@@ -69,25 +70,30 @@ contract Main is Test {
     // ==============================================
     // ============== ERRORS ========================
 
+    error Main__NameCanNotBeEmpty();
     error Main__NotAdmin(address sender, address admin);
     error Main__PlayerAlreadyExists(address player);
     error Main__NameAlreadyExists(string name);
+    error Main__CreatureDoesNotExist(uint256 id);
 
     // ==============================================
     // ============== EVENTS ========================
-    event Main__PlayerCreated(address player, string name);
+    event Main__PlayerCreated(address indexed player, string indexed name);
     event Main__PlayerAttackedPlayer(
-        address player1,
-        address player2,
-        string winner
+        address indexed player1,
+        address indexed player2,
+        string indexed winner
     );
     event Main__PlayerAttackedCreature(
-        address player,
-        uint256 creatureId,
-        string winner
+        address indexed player,
+        uint256 indexed creatureId,
+        string indexed winner
     );
-    event Main__PlayerRespawned(address player);
-    event Main__PlayerImprovedAttribute(address player, uint16 attribute);
+    event Main__PlayerRespawned(address indexed player);
+    event Main__PlayerImprovedAttribute(
+        address indexed player,
+        uint16 indexed attribute
+    );
 
     // event Main__PlayerDied(address player);
 
@@ -112,7 +118,7 @@ contract Main is Test {
 
     function createPlayer(string memory _name) public {
         if (bytes(_name).length == 0) {
-            revert("Name cannot be empty");
+            revert Main__NameCanNotBeEmpty();
         }
         if (players[msg.sender].id != 0) {
             revert Main__PlayerAlreadyExists({player: msg.sender});
@@ -132,7 +138,7 @@ contract Main is Test {
             quantity_players, // id
             _name,
             1, //level
-            0, // exp
+            0, // exp @audit-issue lets go with exp defines the level, first create the level function
             0, // lastAttackTime
             // true, // alive
             0, // gold
@@ -145,7 +151,12 @@ contract Main is Test {
     }
 
     function attackPlayer(string memory _player2) public {
-        // Player memory _player2 = players[name_to_address[_player]];
+        Player memory _player2Exist = players[name_to_address[_player2]];
+        require(
+            _player2Exist.playerAddress != address(0),
+            "Player does not exist"
+        );
+
         determineWinnerPlayers(_player2);
     }
 
@@ -410,6 +421,7 @@ contract Main is Test {
         }
     }
 
+    // attacking creatures
     function determineWinnerWithCreature(
         uint256 _creatureId
     ) public returns (string memory) {
@@ -418,7 +430,7 @@ contract Main is Test {
 
         // check if creature exists
         if (creature.id == 0 || creature.id > 5) {
-            revert("Creature does not exist");
+            revert Main__CreatureDoesNotExist(_creatureId);
         }
 
         // is player alive?
@@ -752,9 +764,11 @@ contract Main is Test {
     // EMIT EVENTS FOR EVERYTHING THAT HAPPENS
     //[[[ upgrade attributes]]]
 
+    // [ ] make the attacker loses gold when he is defeated
+    // [ ] add 2  different timers, one for a player to attack different players and one longer for the same player
+
     // boost?
     // [so it will be reusable] create a function to update time to wait for both players and creaters
-    // fn calculate level
     // all events
     // respawn after death
 
