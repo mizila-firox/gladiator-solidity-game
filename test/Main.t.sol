@@ -323,9 +323,8 @@ contract CounterTest is Test {
         string memory result = main.determineWinnerWithCreature(1); // 1 == Globin the weakest creature
         skip(1 minutes); // 30 seconds is enough
         string memory result2 = main.determineWinnerWithCreature(1); // 2 == Orc,  the second weakest creature
-        skip(1 minutes); // 30 seconds is enough
+        skip(1 minutes); // 30 seconds
         string memory result3 = main.determineWinnerWithCreature(1); // 2 == Orc,  the second weakest creature
-
         console.log("winner:", result3);
 
         _getStatus2("player1");
