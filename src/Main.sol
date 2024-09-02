@@ -10,6 +10,13 @@ contract Main is Test {
     // ==============================================
     // ============== VARIABLES =====================
 
+    struct TopPlayer {
+        address playerAddress;
+        uint256 exp;
+    }
+
+    TopPlayer[10] public topPlayers;
+
     uint256 public num = 777;
 
     uint256 constant MIN_TIME_WAITING_FOR_ALL_PLAYERS = 30 seconds;
@@ -160,6 +167,38 @@ contract Main is Test {
         determineWinnerPlayers(_player2);
     }
 
+    function updateTopPlayers(address _player, uint256 _exp) private {
+        // Find if the player is already in the top 10
+        int256 currentIndex = -1;
+        for (uint i = 0; i < 10; i++) {
+            if (topPlayers[i].playerAddress == _player) {
+                currentIndex = int256(i);
+                break;
+            }
+        }
+
+        // If player is already in top 10, update their position or remove them if needed
+        if (currentIndex != -1) {
+            // Remove player from the list
+            for (uint i = uint256(currentIndex); i < 9; i++) {
+                topPlayers[i] = topPlayers[i + 1];
+            }
+            topPlayers[9] = TopPlayer(address(0), 0); // Clear the last slot
+        }
+
+        // Insert player into the correct position based on new experience
+        for (uint i = 0; i < 10; i++) {
+            if (_exp > topPlayers[i].exp) {
+                // Shift down lower-ranked players
+                for (uint j = 9; j > i; j--) {
+                    topPlayers[j] = topPlayers[j - 1];
+                }
+                topPlayers[i] = TopPlayer(_player, _exp);
+                break;
+            }
+        }
+    }
+
     // this is a pseudo random number, it's not secure, but it's good enough for now
     function getPseudoRandomNumber() public returns (uint256) {
         uint256 randomNumber = (uint256(
@@ -302,7 +341,7 @@ contract Main is Test {
         // the one who makes the more amount of points wins
         uint256 playerScore = _calculateScore(player.attributes);
         uint256 creatureScore = _calculateScore(creature.attributes);
-        console.log(playerScore, creatureScore);
+        // console.log(playerScore, creatureScore);
 
         // i want a time to cool down so the player has to wait some time before attacking again
         require(
@@ -457,6 +496,9 @@ contract Main is Test {
         // Recalculate the player's level based on the new exp amount.
         uint256 newLevel = Math.sqrt(_player.exp / 1000) + 1;
         _player.level = newLevel;
+
+        // [scoreboard] update top 10 players
+        updateTopPlayers(_player.playerAddress, _player.exp);
     }
 
     function _calculateLevelPlayerAgainstPlayer(
@@ -521,6 +563,9 @@ contract Main is Test {
         // now calculate player2 level
         uint256 newLevel2 = Math.sqrt(_player2.exp / 1000) + 1;
         _player2.level = newLevel2;
+
+        // [scoreboard] update top 10 players
+        updateTopPlayers(_player.playerAddress, _player.exp);
     }
 
     // this function works better than the generated getter `player`
@@ -532,5 +577,17 @@ contract Main is Test {
         uint256 _index
     ) public view returns (Creature memory) {
         return creatures[_index];
+    }
+
+    // ==============================================
+    // ============== SCOREBOARD ====================
+    function getTopPlayers() public view returns (TopPlayer[10] memory) {
+        return topPlayers;
+    }
+
+    function getTopPlayersIndex(
+        uint256 index
+    ) public view returns (TopPlayer memory) {
+        return topPlayers[index];
     }
 }

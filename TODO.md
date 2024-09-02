@@ -1,5 +1,7 @@
-[ ] upgrade attributes
-[ ] add a testnet configuration to test more precisely the pseudo random numbers, add the Config files
+[x] upgrade attributes
+[x] add a testnet configuration to test more precisely the pseudo random numbers, add the Config files
+[x] add 2 different timers, one for a player to attack different players and one longer for the same player
+[ ] add chainlink VRF
 [ ] define the price of improvements
 [ ] define how much min and max gold to take from users and creatures
 [ ] add a shield skill? or will it be more useful for equipments?
@@ -7,7 +9,6 @@
 [ ] CREATE THE SCOREBOARD
 [ ] EMIT EVENTS FOR EVERYTHING THAT HAPPENS
 [ ] a gas golf can be performed to really improve, but not for now
-[ ] add 2 different timers, one for a player to attack different players and one longer for the same player
 [ ] boost?
 // [so it will be reusable] create a function to update time to wait for both players and creatures
 [ ] should it use msgSender library in case of somone is subzidizing the txs?

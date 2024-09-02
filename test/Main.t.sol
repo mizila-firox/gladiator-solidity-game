@@ -29,6 +29,48 @@ contract CounterTest is Test {
         main = new Main();
     }
 
+    function testScoreboard() public {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        for (uint256 i = 0; i < 30; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
+
+        vm.startPrank(player2);
+        main.createPlayer("player2");
+        for (uint256 i = 0; i < 40; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
+
+        skip(1 days);
+
+        vm.startPrank(player3);
+        main.createPlayer("player3");
+        for (uint256 i = 0; i < 50; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
+
+        //
+
+        vm.startPrank(player2);
+        for (uint256 i = 0; i < 30; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
+
+        // function getTopPlayers() public view returns (TopPlayer[10] memory) {
+        Main.TopPlayer[10] memory topPlayers = main.getTopPlayers();
+        for (uint256 i = 0; i < 10; i++) {
+            console.log("address:", topPlayers[i].playerAddress);
+            console.log("exp:", topPlayers[i].exp);
+            console.log("====================================");
+        }
+    }
+
     function testCreatePlayer() public {
         vm.startPrank(player1);
         main.createPlayer("player1");
