@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
-import "../src/Main.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {Main} from "../src/Main.sol";
+import {MainScript} from "../script/Main.s.sol";
+import {Proxy} from "../src/proxy/Proxy.sol";
 
-contract CounterTest is Test {
+contract MainTest is Test {
     Main main;
+    Proxy proxy;
     address player1 = makeAddr("player1");
     address player2 = makeAddr("player2");
     address player3 = makeAddr("player3");
@@ -26,8 +29,29 @@ contract CounterTest is Test {
     }
 
     function setUp() public {
-        main = new Main();
+        // main = new Main();
+        MainScript script = new MainScript();
+        (main, proxy) = script.run();
     }
+
+    function testUsingProxy() external {
+        // proxy.createPlayer("player1");
+        vm.startPrank(player1);
+        (bool success, ) = address(proxy).call(
+            abi.encodeWithSignature("createPlayer(string)", "hello")
+        );
+
+        require(success, "failed to create player");
+
+        uint256 qty = main.quantity_players();
+        assertEq(qty, 1);
+
+        address addr = main.name_to_address("hello");
+        console.log("addr:", addr);
+    }
+
+    // cast from-utf8 "take this 0.1 BnM token with you :}"
+    // cast to-ascii 0x74616b65207468697320302e3120426e4d20746f6b656e207769746820796f75203a7d
 
     function testCreatePlayer() public {
         vm.startPrank(player1);

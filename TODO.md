@@ -1,4 +1,6 @@
-[ ] upgrade attributes
+[x] upgrade attributes
+[x] make the contract upgradeable for the next version
+[ ] can we simply add a defense for this version and then add the sets and armors in the next version?
 [ ] add a testnet configuration to test more precisely the pseudo random numbers, add the Config files
 [ ] define the price of improvements
 [ ] define how much min and max gold to take from users and creatures

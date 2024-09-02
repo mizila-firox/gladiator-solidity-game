@@ -3,10 +3,11 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
+import {Initializable} from "openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
 
 // @audit contract wont work when importing the Test framework
 // @audit contract wont work when importing the Test framework
-contract Main is Test {
+contract Main is Test, Initializable {
     // ==============================================
     // ============== VARIABLES =====================
 
@@ -18,6 +19,10 @@ contract Main is Test {
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
     uint256 private nonce = 0;
+
+    fallback() external {
+        revert("Function does not exist");
+    }
 
     struct Player {
         uint256 id;
@@ -95,11 +100,13 @@ contract Main is Test {
         uint16 indexed attribute
     );
 
-    // event Main__PlayerDied(address player);
+    // constructor() {
+    //     admin = msg.sender;
+    //     _creatingInitialCreatures();
+    // }
 
-    constructor() {
+    function initialize() public initializer {
         admin = msg.sender;
-
         _creatingInitialCreatures();
     }
 
@@ -384,7 +391,7 @@ contract Main is Test {
     // add a check here if underflow, but will revert anyways
     function improveAttribute(uint16 _attribute) public {
         Player storage player = players[msg.sender];
-        uint cost;
+        uint256 cost;
 
         require(_attribute >= 1 && _attribute <= 3, "Invalid attribute"); // 1 = strength, 2 = agility, 3 = intelligence
 
