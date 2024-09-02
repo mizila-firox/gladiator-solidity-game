@@ -14,7 +14,7 @@ contract Main is Test {
 
     uint256 constant MIN_TIME_WAITING_FOR_ALL_PLAYERS = 30 seconds;
     uint256 constant HOURS_TO_ATTACK_SAME_PLAYER_AGAIN = 1 hours;
-    uint256 public minGoldToTake = 10;
+    // uint256 public minGoldToTake = 10;
     uint256 constant EXP = 100; // just leave this magic number here for now, it does not even need to be a constant
     uint256 public quantity_players = 0;
     uint256 private nonce = 0;
@@ -241,19 +241,6 @@ contract Main is Test {
         uint256 player1Score = _calculateScore(player1.attributes);
         uint256 player2Score = _calculateScore(player2.attributes);
 
-        // heree
-        // i want a time to cool down so the player has to wait some time before attacking again
-        // the above one is different from this one, one is if one player can attack again the other and this one is if the player can attack again after the X minutes have passed
-
-        // REDUNDANT TOO, BEING CHECKED IN THE FUNCTION ABOVE
-        // require(
-        //     block.timestamp >= player1.lastAttackTime + MIN_TIME_WAITING_FOR_ALL_PLAYERS ||
-        //         player1.lastAttackTime == 0,
-        //     "Player is waiting"
-        // );
-
-        // player1.lastAttackTime = block.timestamp; // [MAYBE NOT] should we update player2 too so he doesnt get attacked again by other players or not??
-
         if (player1Score > player2Score) {
             _calculateLevelPlayerAgainstPlayer(
                 FightResult.WIN,
@@ -311,11 +298,6 @@ contract Main is Test {
         if (creature.id == 0 || creature.id > 5) {
             revert Main__CreatureDoesNotExist(_creatureId);
         }
-
-        // is player alive?
-        // if (!player.alive) {
-        //     revert("Player is dead");
-        // }
 
         // the one who makes the more amount of points wins
         uint256 playerScore = _calculateScore(player.attributes);

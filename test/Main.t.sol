@@ -105,48 +105,49 @@ contract CounterTest is Test {
 
     function testAttackOneMonsterWithPlayer() public createPlayer {
         _getStatus();
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
-        skip(10 minutes);
-        main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
-        _getStatus();
+
+        for (uint256 i = 0; i < 40; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
 
         main.improveAttribute(1);
-        _getStatus();
-        main.improveAttribute(1);
-        _getStatus();
         main.improveAttribute(2);
-        _getStatus();
         main.improveAttribute(3);
-        _getStatus();
+        main.improveAttribute(2);
+        main.improveAttribute(2);
+        main.improveAttribute(1);
+        main.improveAttribute(2);
+        main.improveAttribute(1);
+        main.improveAttribute(3);
+        main.improveAttribute(3);
         main.improveAttribute(3);
         _getStatus();
 
         // attack a stronger monster
         skip(11 minutes);
-        main.determineWinnerWithCreature(3); // 3 == Dragon
+        main.determineWinnerWithCreature(4); // 3 == Dragon
         _getStatus();
+    }
+
+    function testP1TooStrongToDieToP2() external {
+        vm.startPrank(player1);
+        main.createPlayer("player1");
+
+        for (uint256 i = 0; i < 40; i++) {
+            main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
+            skip(10 minutes);
+        }
+
+        for (uint256 i = 0; i < 8; i++) {
+            if (i % 2 == 0) {
+                main.improveAttribute(1);
+            } else if (i % 3 == 0) {
+                main.improveAttribute(2);
+            } else {
+                main.improveAttribute(3);
+            }
+        }
     }
 
     function testAttacks() public {

@@ -3,9 +3,16 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
 import {Main} from "../src/Main.sol";
+import {ConfigScript} from "./config/Config.s.sol";
 
 contract MainScript is Script {
-    function setUp() public {}
+    ConfigScript private config;
+    ConfigScript.ConfigStruct private currentConfig;
+
+    function setUp() public {
+        config = new ConfigScript();
+        currentConfig = config.getCurrentConfig();
+    }
 
     function run() public {
         vm.broadcast();

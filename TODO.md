@@ -1,4 +1,5 @@
 [ ] upgrade attributes
+[ ] add a testnet configuration to test more precisely the pseudo random numbers, add the Config files
 [ ] define the price of improvements
 [ ] define how much min and max gold to take from users and creatures
 [ ] add a shield skill? or will it be more useful for equipments?
