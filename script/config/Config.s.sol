@@ -14,6 +14,8 @@ contract ConfigScript is Script {
     constructor() {
         if (block.chainid == 1) {
             currentConfig = ethereumMainnetConfig();
+        } else if (block.chainid == 11155111) {
+            currentConfig = sepoliaConfig();
         } else {
             currentConfig = anvilConfig();
         }
@@ -26,6 +28,13 @@ contract ConfigScript is Script {
     {
         ConfigStruct memory config;
         config = ConfigStruct({chainId: 1, linkToken: address(0)});
+
+        return config;
+    }
+
+    function sepoliaConfig() private pure returns (ConfigStruct memory) {
+        ConfigStruct memory config;
+        config = ConfigStruct({chainId: 11155111, linkToken: address(0)});
 
         return config;
     }
