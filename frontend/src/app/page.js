@@ -2,18 +2,395 @@
 
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import PlayerCard from "@/components/game/PlayerCard";
-import CreatureGrid from "@/components/game/CreatureGrid";
-import ConnectWallet from "@/components/ui/ConnectWallet";
+import styled from "styled-components";
 
 // Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0x07883bA76958F85C97804ba2f599dA41bFF08848"; // You need to deploy your contract and put the address here
+const CONTRACT_ADDRESS = "0x07883bA76958F85C97804ba2f599dA41bFF08848"; // You need to put your deployed contract address here
 const CONTRACT_ABI = [
   "function createPlayer(string memory _name) public",
   "function determineWinnerWithCreature(uint256 _creatureId) public returns (string memory)",
   "function improveAttribute(uint16 _attribute) public",
   "function get_players(address _address) public view returns (tuple(uint256 id, string name, uint256 level, uint256 exp, uint256 lastAttackTime, uint256 gold, tuple(uint256 wins, uint256 losses, uint256 draws) battleStats, tuple(uint256 strength, uint256 agility, uint256 intelligence) attributes, address playerAddress))",
 ];
+
+// Styled Components
+const AppContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #2d1810 0%,
+    #4a2c1a 25%,
+    #3d2317 50%,
+    #2d1810 75%,
+    #1a0f08 100%
+  );
+  font-family: "Cinzel", serif;
+  color: #f4e4bc;
+`;
+
+const Header = styled.header`
+  background: linear-gradient(
+    145deg,
+    #8b4513 0%,
+    #a0522d 15%,
+    #cd853f 30%,
+    #daa520 45%,
+    #cd853f 60%,
+    #a0522d 85%,
+    #8b4513 100%
+  );
+  border: 3px solid #daa520;
+  border-bottom: 4px solid #daa520;
+  padding: 16px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Title = styled.h1`
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  color: #daa520;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 2rem;
+  margin: 0;
+`;
+
+const HeaderStats = styled.div`
+  display: flex;
+  gap: 24px;
+  font-size: 0.875rem;
+`;
+
+const StatItem = styled.div`
+  text-align: center;
+
+  .value {
+    font-weight: bold;
+    font-size: 1.125rem;
+    color: ${(props) => props.color || "#ffd700"};
+  }
+
+  .label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+`;
+
+const MainLayout = styled.div`
+  display: flex;
+  height: calc(100vh - 80px);
+`;
+
+const Sidebar = styled.aside`
+  width: 280px;
+  background: linear-gradient(
+    145deg,
+    #8b4513 0%,
+    #a0522d 15%,
+    #cd853f 30%,
+    #daa520 45%,
+    #cd853f 60%,
+    #a0522d 85%,
+    #8b4513 100%
+  );
+  border-right: 3px solid #daa520;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.6);
+  overflow-y: auto;
+`;
+
+const SidebarInner = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  margin: 4px;
+  padding: 20px;
+  height: calc(100% - 8px);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  background: linear-gradient(
+    145deg,
+    #8b4513 0%,
+    #a0522d 15%,
+    #cd853f 30%,
+    #daa520 45%,
+    #cd853f 60%,
+    #a0522d 85%,
+    #8b4513 100%
+  );
+  border: 3px solid #daa520;
+  border-left: none;
+  margin: 0 4px 4px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+`;
+
+const ContentInner = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  margin: 4px;
+  padding: 24px;
+  height: calc(100% - 8px);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+`;
+
+const Panel = styled.div`
+  background: linear-gradient(
+    145deg,
+    #8b4513 0%,
+    #a0522d 15%,
+    #cd853f 30%,
+    #daa520 45%,
+    #cd853f 60%,
+    #a0522d 85%,
+    #8b4513 100%
+  );
+  border: 3px solid #daa520;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+`;
+
+const PanelInner = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  border-radius: 4px;
+  margin: 4px;
+  padding: 16px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+`;
+
+const MenuTitle = styled.h3`
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  color: #daa520;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 1.125rem;
+`;
+
+const MenuItem = styled.div`
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ffd700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.3);
+  }
+`;
+
+const CharacterPortrait = styled.div`
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 3px solid #daa520;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(218, 165, 32, 0.3);
+
+  .avatar {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .name {
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    color: #daa520;
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+  }
+
+  .level {
+    color: #ffd700;
+    font-size: 0.875rem;
+  }
+`;
+
+const StatBar = styled.div`
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 1px solid #8b4513;
+  border-radius: 10px;
+  padding: 2px;
+  height: 20px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  margin-top: 4px;
+  margin-bottom: 12px;
+`;
+
+const StatFill = styled.div`
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.8s ease-in-out;
+  width: ${(props) => props.width}%;
+  background: ${(props) => props.gradient};
+  box-shadow: ${(props) => props.shadow};
+`;
+
+const StatRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+
+  .label {
+    color: #ffd700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  .value {
+    font-weight: bold;
+    color: ${(props) => props.valueColor || "#ffd700"};
+  }
+`;
+
+const GoldButton = styled.button`
+  background: linear-gradient(
+    145deg,
+    #daa520 0%,
+    #ffd700 25%,
+    #ffff00 50%,
+    #ffd700 75%,
+    #daa520 100%
+  );
+  border: 2px solid #b8860b;
+  border-radius: 6px;
+  color: #2d1810;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  padding: 8px 16px;
+  font-family: "Cinzel", serif;
+
+  &:hover {
+    background: linear-gradient(
+      145deg,
+      #ffd700 0%,
+      #ffff00 25%,
+      #ffffff 50%,
+      #ffff00 75%,
+      #ffd700 100%
+    );
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.6);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const CreatureGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+`;
+
+const CreatureCard = styled.div`
+  background: linear-gradient(
+    135deg,
+    #2d1810 0%,
+    #4a2c1a 25%,
+    #3d2317 75%,
+    #2d1810 100%
+  );
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+
+  &:hover {
+    border-color: #daa520;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(218, 165, 32, 0.4);
+    transform: translateY(-2px);
+  }
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const CreatureAvatar = styled.div`
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 3px solid #daa520;
+  border-radius: 8px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 12px;
+  background: #2c1810;
+  border: 2px solid #daa520;
+  border-radius: 4px;
+  color: #ffd700;
+  font-family: "Cinzel", serif;
+  margin-bottom: 16px;
+
+  &::placeholder {
+    color: rgba(255, 215, 0, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  }
+`;
+
+const ButtonGrid = styled.div`
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+`;
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 0.75rem;
+  text-align: center;
+`;
+
+const StatCard = styled.div`
+  background: ${(props) => props.bgColor};
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid ${(props) => props.borderColor};
+
+  .value {
+    color: ${(props) => props.textColor};
+    font-weight: bold;
+    font-size: 1rem;
+  }
+`;
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
@@ -196,343 +573,343 @@ export default function Home() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="panel max-w-2xl w-full">
-          <div className="panel-inner text-center">
-            <h1 className="medieval-title text-4xl mb-6">
-              ⚔️ GLADIATOR ARENA ⚔️
-            </h1>
-            <p className="text-xl mb-8 gold-text">
-              Fight monsters, battle players, and become the ultimate gladiator!
-            </p>
-            <button onClick={connectWallet} className="btn-gold text-xl">
-              ⚔️ Connect Wallet & Enter Arena
-            </button>
-          </div>
+      <AppContainer>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            padding: "20px",
+          }}
+        >
+          <Panel style={{ maxWidth: "600px", width: "100%" }}>
+            <PanelInner style={{ textAlign: "center" }}>
+              <Title style={{ fontSize: "2.5rem", marginBottom: "24px" }}>
+                ⚔️ GLADIATOR ARENA ⚔️
+              </Title>
+              <p
+                style={{
+                  fontSize: "1.25rem",
+                  marginBottom: "32px",
+                  color: "#ffd700",
+                }}
+              >
+                Fight monsters, battle players, and become the ultimate
+                gladiator!
+              </p>
+              <GoldButton
+                onClick={connectWallet}
+                style={{ fontSize: "1.25rem", padding: "16px 32px" }}
+              >
+                ⚔️ Connect Wallet & Enter Arena
+              </GoldButton>
+            </PanelInner>
+          </Panel>
         </div>
-      </div>
+      </AppContainer>
     );
   }
 
   return (
-    <div className="min-h-screen p-4">
+    <AppContainer>
       {/* Header */}
-      <div className="panel mb-4">
-        <div className="panel-inner">
-          <div className="flex justify-between items-center">
-            <h1 className="medieval-title text-2xl">⚔️ GLADIATOR ARENA</h1>
-            <div className="flex space-x-6 text-sm">
-              <div className="text-center">
-                <div className="gold-text font-bold text-lg">
-                  🪙 {player?.gold || 0}
-                </div>
-                <div className="text-xs">Gold</div>
-              </div>
-              <div className="text-center">
-                <div className="text-blue-400 font-bold text-lg">
-                  ⭐ {player?.exp || 0}
-                </div>
-                <div className="text-xs">Experience</div>
-              </div>
-              <div className="text-center">
-                <div className="text-green-400 font-bold text-xs">
-                  {account.slice(0, 6)}...{account.slice(-4)}
-                </div>
-                <div className="text-xs">Connected</div>
-              </div>
+      <Header>
+        <Title>⚔️ GLADIATOR ARENA</Title>
+        <HeaderStats>
+          <StatItem color="#ffd700">
+            <div className="value">🪙 {player?.gold || 0}</div>
+            <div className="label">Gold</div>
+          </StatItem>
+          <StatItem color="#4169e1">
+            <div className="value">⭐ {player?.exp || 0}</div>
+            <div className="label">Experience</div>
+          </StatItem>
+          <StatItem color="#32cd32">
+            <div className="value">
+              {account.slice(0, 6)}...{account.slice(-4)}
             </div>
-          </div>
-        </div>
-      </div>
+            <div className="label">Connected</div>
+          </StatItem>
+        </HeaderStats>
+      </Header>
 
-      {/* Main Content - Original Layout */}
-      <div className="grid grid-cols-12 gap-4 max-w-7xl mx-auto">
-        {/* Left Menu */}
-        <div className="col-span-2">
-          <div className="panel">
-            <div className="panel-inner">
-              <h3 className="medieval-title text-lg mb-4 text-center">Menu</h3>
-              <nav className="space-y-2">
-                <div className="p-2 rounded hover:bg-yellow-600/20 transition-colors gold-text cursor-pointer">
-                  🏛️ Arena
-                </div>
-                <div className="p-2 rounded hover:bg-yellow-600/20 transition-colors gold-text cursor-pointer">
-                  👤 Profile
-                </div>
-                <div className="p-2 rounded hover:bg-yellow-600/20 transition-colors gold-text cursor-pointer">
-                  🏆 Leaderboard
-                </div>
-                <div className="p-2 rounded hover:bg-yellow-600/20 transition-colors gold-text cursor-pointer">
-                  ⚔️ Battle
-                </div>
-              </nav>
-            </div>
-          </div>
-        </div>
+      <MainLayout>
+        {/* Sidebar */}
+        <Sidebar>
+          <SidebarInner>
+            {/* Menu */}
+            <Panel>
+              <PanelInner>
+                <MenuTitle>Menu</MenuTitle>
+                <MenuItem>🏛️ Arena</MenuItem>
+                <MenuItem>👤 Profile</MenuItem>
+                <MenuItem>🏆 Leaderboard</MenuItem>
+                <MenuItem>⚔️ Battle</MenuItem>
+                <MenuItem>🏪 Market</MenuItem>
+                <MenuItem>🎯 Quests</MenuItem>
+              </PanelInner>
+            </Panel>
 
-        {/* Character Panel */}
-        <div className="col-span-4">
-          <div className="panel">
-            <div className="panel-inner">
-              {!player ? (
-                <div>
-                  <h3 className="medieval-title text-xl mb-4 text-center">
-                    Create Gladiator
-                  </h3>
-                  <input
+            {/* Character */}
+            {!player ? (
+              <Panel>
+                <PanelInner>
+                  <MenuTitle>Create Gladiator</MenuTitle>
+                  <Input
                     type="text"
                     placeholder="Enter gladiator name"
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
-                    className="w-full p-3 mb-4 bg-stone-800 border-2 border-yellow-600 rounded text-yellow-100 placeholder-yellow-600/50"
                     maxLength={20}
                   />
-                  <button
+                  <GoldButton
                     onClick={createPlayer}
                     disabled={creating || !playerName.trim()}
-                    className="btn-gold w-full"
+                    style={{ width: "100%" }}
                   >
                     {creating ? "⚔️ Creating..." : "⚔️ Create Gladiator"}
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  {/* Character Portrait */}
-                  <div className="character-portrait p-4 mb-4 text-center">
-                    <div className="text-4xl mb-2">🏛️</div>
-                    <h3 className="medieval-title text-lg">{player.name}</h3>
-                    <p className="text-sm text-yellow-300">
-                      Level {player.level} Gladiator
-                    </p>
-                  </div>
+                  </GoldButton>
+                </PanelInner>
+              </Panel>
+            ) : (
+              <>
+                {/* Character Portrait */}
+                <Panel>
+                  <PanelInner>
+                    <CharacterPortrait>
+                      <div className="avatar">🏛️</div>
+                      <div className="name">{player.name}</div>
+                      <div className="level">
+                        Level {player.level} Gladiator
+                      </div>
+                    </CharacterPortrait>
+                  </PanelInner>
+                </Panel>
 
-                  {/* Only Contract Attributes */}
-                  <div className="space-y-3 mb-4">
-                    <h4 className="medieval-title text-center mb-2 gold-text">
-                      Attributes
-                    </h4>
+                {/* Attributes */}
+                <Panel>
+                  <PanelInner>
+                    <MenuTitle>Attributes</MenuTitle>
 
-                    {/* Strength */}
-                    <div>
-                      <div className="flex justify-between mb-1 text-sm">
-                        <span className="gold-text">💪 Strength</span>
-                        <span className="text-red-400 font-bold">
-                          {player.attributes.strength}
-                        </span>
-                      </div>
-                      <div className="stat-bar">
-                        <div
-                          className="stat-fill stat-strength"
-                          style={{
-                            width: `${Math.min(
-                              player.attributes.strength * 10,
-                              100
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
+                    <StatRow valueColor="#dc143c">
+                      <span className="label">💪 Strength</span>
+                      <span className="value">
+                        {player.attributes.strength}
+                      </span>
+                    </StatRow>
+                    <StatBar>
+                      <StatFill
+                        width={Math.min(player.attributes.strength * 10, 100)}
+                        gradient="linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #ff6347 100%)"
+                        shadow="0 0 10px rgba(220, 20, 60, 0.5)"
+                      />
+                    </StatBar>
 
-                    {/* Agility */}
-                    <div>
-                      <div className="flex justify-between mb-1 text-sm">
-                        <span className="gold-text">🏃 Agility</span>
-                        <span className="text-green-400 font-bold">
-                          {player.attributes.agility}
-                        </span>
-                      </div>
-                      <div className="stat-bar">
-                        <div
-                          className="stat-fill stat-agility"
-                          style={{
-                            width: `${Math.min(
-                              player.attributes.agility * 10,
-                              100
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
+                    <StatRow valueColor="#32cd32">
+                      <span className="label">🏃 Agility</span>
+                      <span className="value">{player.attributes.agility}</span>
+                    </StatRow>
+                    <StatBar>
+                      <StatFill
+                        width={Math.min(player.attributes.agility * 10, 100)}
+                        gradient="linear-gradient(90deg, #006400 0%, #32cd32 50%, #90ee90 100%)"
+                        shadow="0 0 10px rgba(50, 205, 50, 0.5)"
+                      />
+                    </StatBar>
 
-                    {/* Intelligence */}
-                    <div>
-                      <div className="flex justify-between mb-1 text-sm">
-                        <span className="gold-text">🧠 Intelligence</span>
-                        <span className="text-blue-400 font-bold">
-                          {player.attributes.intelligence}
-                        </span>
-                      </div>
-                      <div className="stat-bar">
-                        <div
-                          className="stat-fill stat-intelligence"
-                          style={{
-                            width: `${Math.min(
-                              player.attributes.intelligence * 10,
-                              100
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
+                    <StatRow valueColor="#4169e1">
+                      <span className="label">🧠 Intelligence</span>
+                      <span className="value">
+                        {player.attributes.intelligence}
+                      </span>
+                    </StatRow>
+                    <StatBar>
+                      <StatFill
+                        width={Math.min(
+                          player.attributes.intelligence * 10,
+                          100
+                        )}
+                        gradient="linear-gradient(90deg, #000080 0%, #4169e1 50%, #87ceeb 100%)"
+                        shadow="0 0 10px rgba(65, 105, 225, 0.5)"
+                      />
+                    </StatBar>
 
-                  {/* Battle Stats */}
-                  <div className="panel mb-4">
-                    <div className="p-3">
-                      <h4 className="medieval-title text-center mb-2 gold-text">
-                        Battle Record
-                      </h4>
-                      <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                        <div className="bg-green-600/20 p-2 rounded border border-green-600/50">
-                          <div className="text-green-400 font-bold">
-                            {player.battleStats.wins}
-                          </div>
-                          <div>Wins</div>
-                        </div>
-                        <div className="bg-red-600/20 p-2 rounded border border-red-600/50">
-                          <div className="text-red-400 font-bold">
-                            {player.battleStats.losses}
-                          </div>
-                          <div>Losses</div>
-                        </div>
-                        <div className="bg-yellow-600/20 p-2 rounded border border-yellow-600/50">
-                          <div className="text-yellow-400 font-bold">
-                            {player.battleStats.draws}
-                          </div>
-                          <div>Draws</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Upgrade Buttons */}
-                  <div className="space-y-2">
-                    <h4 className="medieval-title text-center gold-text text-sm">
-                      Upgrade Attributes
-                    </h4>
-                    <div className="grid grid-cols-3 gap-1">
-                      <button
+                    <ButtonGrid>
+                      <GoldButton
                         onClick={() => upgradeAttribute(1)}
-                        className="btn-gold text-xs py-2"
+                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
                       >
                         💪 STR
-                      </button>
-                      <button
+                      </GoldButton>
+                      <GoldButton
                         onClick={() => upgradeAttribute(2)}
-                        className="btn-gold text-xs py-2"
+                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
                       >
                         🏃 AGI
-                      </button>
-                      <button
+                      </GoldButton>
+                      <GoldButton
                         onClick={() => upgradeAttribute(3)}
-                        className="btn-gold text-xs py-2"
+                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
                       >
                         🧠 INT
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                      </GoldButton>
+                    </ButtonGrid>
+                  </PanelInner>
+                </Panel>
 
-        {/* Equipment Panel */}
-        <div className="col-span-3">
-          <div className="panel">
-            <div className="panel-inner">
-              <h3 className="medieval-title text-xl mb-4 text-center">
-                Equipment
-              </h3>
+                {/* Battle Stats */}
+                <Panel>
+                  <PanelInner>
+                    <MenuTitle>Battle Record</MenuTitle>
+                    <StatsGrid>
+                      <StatCard
+                        bgColor="rgba(34, 197, 94, 0.2)"
+                        borderColor="rgba(34, 197, 94, 0.5)"
+                        textColor="#22c55e"
+                      >
+                        <div className="value">{player.battleStats.wins}</div>
+                        <div>Wins</div>
+                      </StatCard>
+                      <StatCard
+                        bgColor="rgba(239, 68, 68, 0.2)"
+                        borderColor="rgba(239, 68, 68, 0.5)"
+                        textColor="#ef4444"
+                      >
+                        <div className="value">{player.battleStats.losses}</div>
+                        <div>Losses</div>
+                      </StatCard>
+                      <StatCard
+                        bgColor="rgba(234, 179, 8, 0.2)"
+                        borderColor="rgba(234, 179, 8, 0.5)"
+                        textColor="#eab308"
+                      >
+                        <div className="value">{player.battleStats.draws}</div>
+                        <div>Draws</div>
+                      </StatCard>
+                    </StatsGrid>
+                  </PanelInner>
+                </Panel>
+              </>
+            )}
+          </SidebarInner>
+        </Sidebar>
 
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="equipment-slot">
-                  <span className="text-xl">🛡️</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">⛑️</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">🗡️</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">🧤</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">👕</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">💍</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">👖</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">🥾</span>
-                </div>
-                <div className="equipment-slot">
-                  <span className="text-xl">📿</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Main Content */}
+        <MainContent>
+          <ContentInner>
+            <MenuTitle style={{ fontSize: "2rem", marginBottom: "24px" }}>
+              🏛️ THE ARENA
+            </MenuTitle>
 
-        {/* Arena Panel */}
-        <div className="col-span-3">
-          <div className="panel">
-            <div className="panel-inner">
-              <h3 className="medieval-title text-xl mb-4 text-center">
-                🏛️ Arena
-              </h3>
-              {player ? (
-                <div className="space-y-3">
-                  {creatures.map((creature) => (
-                    <div key={creature.id} className="creature-card">
-                      <div className="flex items-center space-x-3">
-                        <div className="character-portrait w-12 h-12 flex items-center justify-center">
-                          <span className="text-xl">{creature.emoji}</span>
-                        </div>
+            {player ? (
+              <CreatureGrid>
+                {creatures.map((creature) => (
+                  <CreatureCard key={creature.id}>
+                    <CreatureAvatar>{creature.emoji}</CreatureAvatar>
 
-                        <div className="flex-1">
-                          <h4 className="gold-text font-bold text-sm">
-                            {creature.name}
-                          </h4>
-                          <p className="text-xs text-yellow-300">
-                            Level {creature.level}
-                          </p>
-                          <div className="flex justify-between text-xs mt-1">
-                            <span className="text-blue-400">
-                              ⭐ {creature.exp}
-                            </span>
-                            <span className="gold-text">
-                              🪙 {creature.gold}
-                            </span>
-                          </div>
-                        </div>
+                    <div style={{ flex: 1 }}>
+                      <h4
+                        style={{
+                          color: "#ffd700",
+                          fontWeight: "bold",
+                          fontSize: "1.125rem",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        {creature.name}
+                      </h4>
+                      <p
+                        style={{
+                          color: "#ffd700",
+                          fontSize: "0.875rem",
+                          marginBottom: "8px",
+                          opacity: 0.8,
+                        }}
+                      >
+                        Level {creature.level}
+                      </p>
 
-                        <button
-                          onClick={() => attackCreature(creature.id)}
-                          disabled={attacking === creature.id}
-                          className="btn-gold text-xs px-2 py-1"
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "8px",
+                          fontSize: "0.875rem",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
                         >
-                          {attacking === creature.id ? "⚔️" : "Attack"}
-                        </button>
+                          <span style={{ color: "#4169e1" }}>⭐ EXP:</span>
+                          <span
+                            style={{ color: "#4169e1", fontWeight: "bold" }}
+                          >
+                            {creature.exp}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <span style={{ color: "#ffd700" }}>🪙 Gold:</span>
+                          <span
+                            style={{ color: "#ffd700", fontWeight: "bold" }}
+                          >
+                            {creature.gold}
+                          </span>
+                        </div>
                       </div>
+
+                      <GoldButton
+                        onClick={() => attackCreature(creature.id)}
+                        disabled={attacking === creature.id}
+                        style={{ width: "100%", padding: "12px" }}
+                      >
+                        {attacking === creature.id
+                          ? "⚔️ Fighting..."
+                          : "⚔️ Attack"}
+                      </GoldButton>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="gold-text">
-                    Create your gladiator to enter the arena!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                  </CreatureCard>
+                ))}
+              </CreatureGrid>
+            ) : (
+              <div style={{ textAlign: "center", padding: "80px 20px" }}>
+                <div style={{ fontSize: "4rem", marginBottom: "16px" }}>🏛️</div>
+                <h4
+                  style={{
+                    fontSize: "2rem",
+                    marginBottom: "16px",
+                    color: "#daa520",
+                  }}
+                >
+                  Welcome to the Arena
+                </h4>
+                <p
+                  style={{
+                    fontSize: "1.125rem",
+                    color: "#ffd700",
+                    marginBottom: "24px",
+                  }}
+                >
+                  Create your gladiator to begin your journey to glory!
+                </p>
+                <p style={{ fontSize: "0.875rem", color: "#a0a0a0" }}>
+                  Fight monsters, gain experience, and become the ultimate
+                  champion.
+                </p>
+              </div>
+            )}
+          </ContentInner>
+        </MainContent>
+      </MainLayout>
+    </AppContainer>
   );
 }
