@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Cinzel", serif;
+  background: linear-gradient(
+    135deg,
+    #2d1810 0%,
+    #4a2c1a 25%,
+    #3d2317 50%,
+    #2d1810 75%,
+    #1a0f08 100%
+  );
+  background-attachment: fixed;
+  color: #f4e4bc;
+  min-height: 100vh;
+}
+
+/* Gladiatus-style panels */
+.panel {
+  background: linear-gradient(
+    145deg,
+    #8b4513 0%,
+    #a0522d 15%,
+    #cd853f 30%,
+    #daa520 45%,
+    #cd853f 60%,
+    #a0522d 85%,
+    #8b4513 100%
+  );
+  border: 3px solid #daa520;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(218, 165, 32, 0.3),
+    inset 0 -2px 4px rgba(139, 69, 19, 0.5), 0 4px 12px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.panel-inner {
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  border-radius: 4px;
+  margin: 4px;
+  padding: 16px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.character-portrait {
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 3px solid #daa520;
+  border-radius: 8px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(218, 165, 32, 0.3);
+}
+
+.btn-gold {
+  background: linear-gradient(
+    145deg,
+    #daa520 0%,
+    #ffd700 25%,
+    #ffff00 50%,
+    #ffd700 75%,
+    #daa520 100%
+  );
+  border: 2px solid #b8860b;
+  border-radius: 6px;
+  color: #2d1810;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(
+    145deg,
+    #ffd700 0%,
+    #ffff00 25%,
+    #ffffff 50%,
+    #ffff00 75%,
+    #ffd700 100%
+  );
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.stat-bar {
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 1px solid #8b4513;
+  border-radius: 10px;
+  padding: 2px;
+  height: 20px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.8s ease-in-out;
+}
+
+.stat-strength {
+  background: linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #ff6347 100%);
+  box-shadow: 0 0 10px rgba(220, 20, 60, 0.5);
+}
+
+.stat-agility {
+  background: linear-gradient(90deg, #006400 0%, #32cd32 50%, #90ee90 100%);
+  box-shadow: 0 0 10px rgba(50, 205, 50, 0.5);
+}
+
+.stat-intelligence {
+  background: linear-gradient(90deg, #000080 0%, #4169e1 50%, #87ceeb 100%);
+  box-shadow: 0 0 10px rgba(65, 105, 225, 0.5);
+}
+
+.creature-card {
+  background: linear-gradient(
+    135deg,
+    #2d1810 0%,
+    #4a2c1a 25%,
+    #3d2317 75%,
+    #2d1810 100%
+  );
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.creature-card:hover {
+  border-color: #daa520;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(218, 165, 32, 0.4);
+  transform: translateY(-2px);
+}
+
+.gold-text {
+  color: #ffd700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.medieval-title {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  color: #daa520;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.equipment-slot {
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 2px solid #8b4513;
+  border-radius: 6px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+  transition: all 0.2s ease;
+}
+
+.equipment-slot:hover {
+  border-color: #daa520;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(218, 165, 32, 0.5);
+}
