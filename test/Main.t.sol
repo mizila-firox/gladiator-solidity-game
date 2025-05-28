@@ -54,15 +54,12 @@ contract CounterTest is Test {
             skip(10 minutes);
         }
 
-        //
-
         vm.startPrank(player2);
         for (uint256 i = 0; i < 30; i++) {
             main.determineWinnerWithCreature(1); // 1 == Goblin,  the weakest creature
             skip(10 minutes);
         }
 
-        // function getTopPlayers() public view returns (TopPlayer[10] memory) {
         Main.TopPlayer[10] memory topPlayers = main.getTopPlayers();
         for (uint256 i = 0; i < 10; i++) {
             console.log("address:", topPlayers[i].playerAddress);

@@ -17,8 +17,6 @@ contract Main is Test {
 
     TopPlayer[10] public topPlayers;
 
-    uint256 public num = 777;
-
     uint256 constant MIN_TIME_WAITING_FOR_ALL_PLAYERS = 30 seconds;
     uint256 constant HOURS_TO_ATTACK_SAME_PLAYER_AGAIN = 1 hours;
     // uint256 public minGoldToTake = 10;
