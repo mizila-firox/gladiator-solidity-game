@@ -207,8 +207,8 @@ const CharacterPortrait = styled.div`
     0 0 15px rgba(218, 165, 32, 0.3);
 
   .avatar {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     margin: 0 auto 8px;
     border: 3px solid #daa520;
@@ -492,8 +492,8 @@ const ProfileCard = styled.div`
 `;
 
 const ProfileAvatar = styled.img`
-  width: 120px;
-  height: 120px;
+  width: 170px;
+  height: 170px;
   border-radius: 50%;
   border: 4px solid #daa520;
   object-fit: cover;
@@ -590,23 +590,14 @@ export default function Home() {
   const [allPlayers, setAllPlayers] = useState([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
-  const [creatureBattles, setCreatureBattles] = useState({
-    wins: 0,
-    losses: 0,
-    draws: 0,
-  });
-  const [playerBattles, setPlayerBattles] = useState({
-    wins: 0,
-    losses: 0,
-    draws: 0,
-  });
 
+  // Fixed creature data to match actual contract rewards (doubled amounts)
   const creatures = [
-    { id: 1, name: "Goblin Warrior", level: 1, exp: 10, gold: 1, emoji: "👹" },
-    { id: 2, name: "Orc Berserker", level: 2, exp: 50, gold: 2, emoji: "🧌" },
-    { id: 3, name: "Troll", level: 3, exp: 100, gold: 8, emoji: "💀" },
-    { id: 4, name: "Dragon", level: 4, exp: 500, gold: 16, emoji: "👺" },
-    { id: 5, name: "Hydra", level: 5, exp: 1000, gold: 32, emoji: "🐉" },
+    { id: 1, name: "Goblin", level: 1, exp: 10, gold: 2, emoji: "👹" }, // 1*2=2 actual
+    { id: 2, name: "Orc", level: 2, exp: 50, gold: 4, emoji: "🧌" }, // 2*2=4 actual
+    { id: 3, name: "Troll", level: 3, exp: 100, gold: 16, emoji: "💀" }, // 8*2=16 actual
+    { id: 4, name: "Dragon", level: 4, exp: 500, gold: 32, emoji: "👺" }, // 16*2=32 actual
+    { id: 5, name: "Hydra", level: 5, exp: 1000, gold: 64, emoji: "🐉" }, // 32*2=64 actual
   ];
 
   // Get gladiator image based on level
@@ -629,48 +620,45 @@ export default function Home() {
     return 100 + player.attributes.strength * 10;
   };
 
-  // Load separate battle records from localStorage
-  const loadBattleRecords = () => {
-    if (!account) return;
+  // Get battle stats properly separated
+  const getCreatureBattleStats = () => {
+    if (!player) return { wins: 0, losses: 0, draws: 0 };
 
-    const creatureKey = `creatureBattles_${account}`;
+    // Get total battles from blockchain
+    const totalBattles = {
+      wins: player.battleStats.wins,
+      losses: player.battleStats.losses,
+      draws: player.battleStats.draws,
+    };
+
+    // Get player battles from localStorage
     const playerKey = `playerBattles_${account}`;
-
-    const savedCreatureBattles = localStorage.getItem(creatureKey);
     const savedPlayerBattles = localStorage.getItem(playerKey);
+    const playerBattles = savedPlayerBattles
+      ? JSON.parse(savedPlayerBattles)
+      : { wins: 0, losses: 0, draws: 0 };
 
-    if (savedCreatureBattles) {
-      setCreatureBattles(JSON.parse(savedCreatureBattles));
-    }
-
-    if (savedPlayerBattles) {
-      setPlayerBattles(JSON.parse(savedPlayerBattles));
-    }
+    // Creature battles = Total battles - Player battles
+    return {
+      wins: Math.max(0, totalBattles.wins - playerBattles.wins),
+      losses: Math.max(0, totalBattles.losses - playerBattles.losses),
+      draws: Math.max(0, totalBattles.draws - playerBattles.draws),
+    };
   };
 
-  // Save battle records to localStorage
-  const saveBattleRecords = (type, result) => {
-    if (!account) return;
-
-    const key =
-      type === "creature"
-        ? `creatureBattles_${account}`
-        : `playerBattles_${account}`;
-    const currentRecords =
-      type === "creature" ? creatureBattles : playerBattles;
-
-    const newRecords = { ...currentRecords };
-    if (result === "win") newRecords.wins += 1;
-    else if (result === "loss") newRecords.losses += 1;
-    else if (result === "draw") newRecords.draws += 1;
-
-    localStorage.setItem(key, JSON.stringify(newRecords));
-
-    if (type === "creature") {
-      setCreatureBattles(newRecords);
-    } else {
-      setPlayerBattles(newRecords);
+  const getPlayerBattleStats = () => {
+    if (!player) return { wins: 0, losses: 0, draws: 0 };
+    // Get player battles from localStorage (real PvP battles)
+    const saved = localStorage.getItem(`playerBattles_${account}`);
+    if (saved) {
+      return JSON.parse(saved);
     }
+    return { wins: 0, losses: 0, draws: 0 };
+  };
+
+  // Calculate upgrade costs (2^current_level)
+  const getUpgradeCost = (attributeLevel) => {
+    return Math.pow(2, attributeLevel);
   };
 
   // Calculate cooldown remaining
@@ -701,9 +689,31 @@ export default function Home() {
 
   useEffect(() => {
     if (account) {
-      loadBattleRecords();
+      loadLeaderboard();
+    } else {
+      // Clear localStorage keys when no account
+      if (typeof window !== "undefined") {
+        const keys = Object.keys(localStorage);
+        keys.forEach((key) => {
+          if (
+            key.includes("creatureBattles_") ||
+            key.includes("playerBattles_")
+          ) {
+            // Don't remove, just reset for current session
+          }
+        });
+      }
     }
   }, [account]);
+
+  // Auto-load data when switching to certain tabs
+  const handleTabChange = async (newPage) => {
+    setCurrentPage(newPage);
+
+    if (newPage === PAGES.LEADERBOARD || newPage === PAGES.BATTLE) {
+      await loadLeaderboard();
+    }
+  };
 
   const checkConnection = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -805,26 +815,9 @@ export default function Home() {
 
     setAttacking(creatureId);
     try {
-      // Store initial stats
-      const initialExp = player.exp;
-      const initialGold = player.gold;
-
       const tx = await contract.determineWinnerWithCreature(creatureId);
       await tx.wait();
       await loadPlayerData(contract, account);
-
-      // Check if player gained exp/gold to determine win/loss
-      const newPlayer = await contract.get_players(account);
-      const finalExp = Number(newPlayer.exp);
-      const finalGold = Number(newPlayer.gold);
-
-      if (finalExp > initialExp || finalGold > initialGold) {
-        saveBattleRecords("creature", "win");
-      } else if (finalExp < initialExp || finalGold < initialGold) {
-        saveBattleRecords("creature", "loss");
-      } else {
-        saveBattleRecords("creature", "draw");
-      }
     } catch (error) {
       console.error("Error attacking creature:", error);
       alert("Error attacking creature. Please try again.");
@@ -886,6 +879,15 @@ export default function Home() {
         }
       }
       setLeaderboard(leaderboardData);
+
+      // Also update allPlayers for battle page if we have an account
+      if (account) {
+        setAllPlayers(
+          leaderboardData.filter(
+            (p) => p.address.toLowerCase() !== account.toLowerCase()
+          )
+        );
+      }
     } catch (error) {
       console.error("Error loading leaderboard:", error);
     } finally {
@@ -926,7 +928,7 @@ export default function Home() {
     if (!contract) return;
 
     try {
-      // Store initial stats
+      // Store initial stats to determine win/loss for player tracking
       const initialExp = player.exp;
       const initialGold = player.gold;
 
@@ -936,18 +938,26 @@ export default function Home() {
       // Reload leaderboard to reflect changes
       await loadLeaderboard();
 
-      // Check if player gained exp/gold to determine win/loss
+      // Update player battle record in localStorage
       const newPlayer = await contract.get_players(account);
       const finalExp = Number(newPlayer.exp);
       const finalGold = Number(newPlayer.gold);
 
+      const playerKey = `playerBattles_${account}`;
+      const saved = localStorage.getItem(playerKey);
+      const currentRecords = saved
+        ? JSON.parse(saved)
+        : { wins: 0, losses: 0, draws: 0 };
+
       if (finalExp > initialExp || finalGold > initialGold) {
-        saveBattleRecords("player", "win");
+        currentRecords.wins += 1;
       } else if (finalExp < initialExp || finalGold < initialGold) {
-        saveBattleRecords("player", "loss");
+        currentRecords.losses += 1;
       } else {
-        saveBattleRecords("player", "draw");
+        currentRecords.draws += 1;
       }
+
+      localStorage.setItem(playerKey, JSON.stringify(currentRecords));
     } catch (error) {
       console.error("Error attacking player:", error);
       alert("Error attacking player. Please try again.");
@@ -1167,7 +1177,10 @@ export default function Home() {
                       </StatRow>
                       <StatBar>
                         <StatFill
-                          width={Math.min(player.attributes.strength * 10, 100)}
+                          width={Math.min(
+                            50 + player.attributes.strength * 5,
+                            100
+                          )}
                           gradient="linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #ff6347 100%)"
                           shadow="0 0 10px rgba(220, 20, 60, 0.5)"
                         />
@@ -1181,7 +1194,10 @@ export default function Home() {
                       </StatRow>
                       <StatBar>
                         <StatFill
-                          width={Math.min(player.attributes.agility * 10, 100)}
+                          width={Math.min(
+                            50 + player.attributes.agility * 5,
+                            100
+                          )}
                           gradient="linear-gradient(90deg, #006400 0%, #32cd32 50%, #90ee90 100%)"
                           shadow="0 0 10px rgba(50, 205, 50, 0.5)"
                         />
@@ -1196,7 +1212,7 @@ export default function Home() {
                       <StatBar>
                         <StatFill
                           width={Math.min(
-                            player.attributes.intelligence * 10,
+                            50 + player.attributes.intelligence * 5,
                             100
                           )}
                           gradient="linear-gradient(90deg, #000080 0%, #4169e1 50%, #87ceeb 100%)"
@@ -1210,7 +1226,7 @@ export default function Home() {
                       </StatRow>
                       <StatBar>
                         <StatFill
-                          width={Math.min(getPlayerHealth() / 2, 100)}
+                          width={Math.min(getPlayerHealth() / 4, 100)}
                           gradient="linear-gradient(90deg, #8b0000 0%, #ff1493 50%, #ff69b4 100%)"
                           shadow="0 0 10px rgba(255, 20, 147, 0.5)"
                         />
@@ -1231,7 +1247,9 @@ export default function Home() {
                             borderColor="rgba(34, 197, 94, 0.5)"
                             textColor="#22c55e"
                           >
-                            <div className="value">{creatureBattles.wins}</div>
+                            <div className="value">
+                              {getCreatureBattleStats().wins}
+                            </div>
                             <div>Wins</div>
                           </StatCard>
                           <StatCard
@@ -1240,7 +1258,7 @@ export default function Home() {
                             textColor="#ef4444"
                           >
                             <div className="value">
-                              {creatureBattles.losses}
+                              {getCreatureBattleStats().losses}
                             </div>
                             <div>Losses</div>
                           </StatCard>
@@ -1249,7 +1267,9 @@ export default function Home() {
                             borderColor="rgba(234, 179, 8, 0.5)"
                             textColor="#eab308"
                           >
-                            <div className="value">{creatureBattles.draws}</div>
+                            <div className="value">
+                              {getCreatureBattleStats().draws}
+                            </div>
                             <div>Draws</div>
                           </StatCard>
                         </StatsGrid>
@@ -1263,7 +1283,9 @@ export default function Home() {
                             borderColor="rgba(34, 197, 94, 0.5)"
                             textColor="#22c55e"
                           >
-                            <div className="value">{playerBattles.wins}</div>
+                            <div className="value">
+                              {getPlayerBattleStats().wins}
+                            </div>
                             <div>Wins</div>
                           </StatCard>
                           <StatCard
@@ -1271,7 +1293,9 @@ export default function Home() {
                             borderColor="rgba(239, 68, 68, 0.5)"
                             textColor="#ef4444"
                           >
-                            <div className="value">{playerBattles.losses}</div>
+                            <div className="value">
+                              {getPlayerBattleStats().losses}
+                            </div>
                             <div>Losses</div>
                           </StatCard>
                           <StatCard
@@ -1279,7 +1303,9 @@ export default function Home() {
                             borderColor="rgba(234, 179, 8, 0.5)"
                             textColor="#eab308"
                           >
-                            <div className="value">{playerBattles.draws}</div>
+                            <div className="value">
+                              {getPlayerBattleStats().draws}
+                            </div>
                             <div>Draws</div>
                           </StatCard>
                         </StatsGrid>
@@ -1306,17 +1332,17 @@ export default function Home() {
               🏆 LEADERBOARD
             </MenuTitle>
 
-            <div style={{ marginBottom: "16px" }}>
-              <GoldButton
-                onClick={loadLeaderboard}
-                disabled={loadingLeaderboard}
-                style={{ padding: "12px 24px" }}
-              >
-                {loadingLeaderboard
-                  ? "🔄 Loading..."
-                  : "🔄 Refresh Leaderboard"}
-              </GoldButton>
-            </div>
+            {leaderboard.length > 0 && (
+              <div style={{ marginBottom: "16px" }}>
+                <GoldButton
+                  onClick={loadLeaderboard}
+                  disabled={loadingLeaderboard}
+                  style={{ padding: "12px 24px" }}
+                >
+                  {loadingLeaderboard ? "🔄 Loading..." : "🔄 Refresh"}
+                </GoldButton>
+              </div>
+            )}
 
             {leaderboard.length > 0 ? (
               <LeaderboardTable>
@@ -1362,7 +1388,7 @@ export default function Home() {
                 <p style={{ color: "#ffd700" }}>
                   {loadingLeaderboard
                     ? "Loading leaderboard..."
-                    : "No players found. Click refresh to load the leaderboard!"}
+                    : "No players found on the leaderboard yet."}
                 </p>
               </div>
             )}
@@ -1378,24 +1404,19 @@ export default function Home() {
 
             {player ? (
               <>
-                <div style={{ marginBottom: "16px" }}>
-                  <GoldButton
-                    onClick={() => {
-                      loadLeaderboard().then(() => {
-                        setAllPlayers(
-                          leaderboard.filter(
-                            (p) =>
-                              p.address.toLowerCase() !== account.toLowerCase()
-                          )
-                        );
-                      });
-                    }}
-                    disabled={loadingLeaderboard}
-                    style={{ padding: "12px 24px" }}
-                  >
-                    {loadingLeaderboard ? "🔄 Loading..." : "🔄 Find Opponents"}
-                  </GoldButton>
-                </div>
+                {allPlayers.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <GoldButton
+                      onClick={loadLeaderboard}
+                      disabled={loadingLeaderboard}
+                      style={{ padding: "12px 24px" }}
+                    >
+                      {loadingLeaderboard
+                        ? "🔄 Loading..."
+                        : "🔄 Refresh Opponents"}
+                    </GoldButton>
+                  </div>
+                )}
 
                 {cooldownTime > 0 && (
                   <CooldownTimer>
@@ -1461,7 +1482,7 @@ export default function Home() {
                     <p style={{ color: "#ffd700" }}>
                       {loadingLeaderboard
                         ? "Loading opponents..."
-                        : "No opponents found. Click 'Find Opponents' to discover other players!"}
+                        : "No opponents found. Players will appear here as they join the game!"}
                     </p>
                   </div>
                 )}
@@ -1578,37 +1599,37 @@ export default function Home() {
                 <MenuTitle>Menu</MenuTitle>
                 <MenuItem
                   active={currentPage === PAGES.ARENA}
-                  onClick={() => setCurrentPage(PAGES.ARENA)}
+                  onClick={() => handleTabChange(PAGES.ARENA)}
                 >
                   🏛️ Arena
                 </MenuItem>
                 <MenuItem
                   active={currentPage === PAGES.PROFILE}
-                  onClick={() => setCurrentPage(PAGES.PROFILE)}
+                  onClick={() => handleTabChange(PAGES.PROFILE)}
                 >
                   👤 Profile
                 </MenuItem>
                 <MenuItem
                   active={currentPage === PAGES.LEADERBOARD}
-                  onClick={() => setCurrentPage(PAGES.LEADERBOARD)}
+                  onClick={() => handleTabChange(PAGES.LEADERBOARD)}
                 >
                   🏆 Leaderboard
                 </MenuItem>
                 <MenuItem
                   active={currentPage === PAGES.BATTLE}
-                  onClick={() => setCurrentPage(PAGES.BATTLE)}
+                  onClick={() => handleTabChange(PAGES.BATTLE)}
                 >
                   ⚔️ Battle
                 </MenuItem>
                 <MenuItem
                   active={currentPage === PAGES.MARKET}
-                  onClick={() => setCurrentPage(PAGES.MARKET)}
+                  onClick={() => handleTabChange(PAGES.MARKET)}
                 >
                   🏪 Market
                 </MenuItem>
                 <MenuItem
                   active={currentPage === PAGES.QUESTS}
-                  onClick={() => setCurrentPage(PAGES.QUESTS)}
+                  onClick={() => handleTabChange(PAGES.QUESTS)}
                 >
                   🎯 Quests
                 </MenuItem>
@@ -1668,7 +1689,10 @@ export default function Home() {
                     </StatRow>
                     <StatBar>
                       <StatFill
-                        width={Math.min(player.attributes.strength * 10, 100)}
+                        width={Math.min(
+                          50 + player.attributes.strength * 5,
+                          100
+                        )}
                         gradient="linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #ff6347 100%)"
                         shadow="0 0 10px rgba(220, 20, 60, 0.5)"
                       />
@@ -1680,7 +1704,10 @@ export default function Home() {
                     </StatRow>
                     <StatBar>
                       <StatFill
-                        width={Math.min(player.attributes.agility * 10, 100)}
+                        width={Math.min(
+                          50 + player.attributes.agility * 5,
+                          100
+                        )}
                         gradient="linear-gradient(90deg, #006400 0%, #32cd32 50%, #90ee90 100%)"
                         shadow="0 0 10px rgba(50, 205, 50, 0.5)"
                       />
@@ -1695,7 +1722,7 @@ export default function Home() {
                     <StatBar>
                       <StatFill
                         width={Math.min(
-                          player.attributes.intelligence * 10,
+                          50 + player.attributes.intelligence * 5,
                           100
                         )}
                         gradient="linear-gradient(90deg, #000080 0%, #4169e1 50%, #87ceeb 100%)"
@@ -1709,7 +1736,7 @@ export default function Home() {
                     </StatRow>
                     <StatBar>
                       <StatFill
-                        width={Math.min(getPlayerHealth() / 2, 100)}
+                        width={Math.min(getPlayerHealth() / 4, 100)}
                         gradient="linear-gradient(90deg, #8b0000 0%, #ff1493 50%, #ff69b4 100%)"
                         shadow="0 0 10px rgba(255, 20, 147, 0.5)"
                       />
@@ -1718,21 +1745,39 @@ export default function Home() {
                     <ButtonGrid>
                       <GoldButton
                         onClick={() => upgradeAttribute(1)}
-                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
+                        disabled={
+                          player.gold <
+                          getUpgradeCost(player.attributes.strength)
+                        }
+                        style={{ fontSize: "0.65rem", padding: "6px 4px" }}
                       >
                         💪 STR
+                        <br />
+                        🪙 {getUpgradeCost(player.attributes.strength)}
                       </GoldButton>
                       <GoldButton
                         onClick={() => upgradeAttribute(2)}
-                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
+                        disabled={
+                          player.gold <
+                          getUpgradeCost(player.attributes.agility)
+                        }
+                        style={{ fontSize: "0.65rem", padding: "6px 4px" }}
                       >
                         🏃 AGI
+                        <br />
+                        🪙 {getUpgradeCost(player.attributes.agility)}
                       </GoldButton>
                       <GoldButton
                         onClick={() => upgradeAttribute(3)}
-                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
+                        disabled={
+                          player.gold <
+                          getUpgradeCost(player.attributes.intelligence)
+                        }
+                        style={{ fontSize: "0.65rem", padding: "6px 4px" }}
                       >
                         🧠 INT
+                        <br />
+                        🪙 {getUpgradeCost(player.attributes.intelligence)}
                       </GoldButton>
                     </ButtonGrid>
                   </PanelInner>
@@ -1751,7 +1796,9 @@ export default function Home() {
                           borderColor="rgba(34, 197, 94, 0.5)"
                           textColor="#22c55e"
                         >
-                          <div className="value">{creatureBattles.wins}</div>
+                          <div className="value">
+                            {getCreatureBattleStats().wins}
+                          </div>
                           <div>Wins</div>
                         </StatCard>
                         <StatCard
@@ -1759,7 +1806,9 @@ export default function Home() {
                           borderColor="rgba(239, 68, 68, 0.5)"
                           textColor="#ef4444"
                         >
-                          <div className="value">{creatureBattles.losses}</div>
+                          <div className="value">
+                            {getCreatureBattleStats().losses}
+                          </div>
                           <div>Losses</div>
                         </StatCard>
                         <StatCard
@@ -1767,7 +1816,9 @@ export default function Home() {
                           borderColor="rgba(234, 179, 8, 0.5)"
                           textColor="#eab308"
                         >
-                          <div className="value">{creatureBattles.draws}</div>
+                          <div className="value">
+                            {getCreatureBattleStats().draws}
+                          </div>
                           <div>Draws</div>
                         </StatCard>
                       </StatsGrid>
@@ -1781,7 +1832,9 @@ export default function Home() {
                           borderColor="rgba(34, 197, 94, 0.5)"
                           textColor="#22c55e"
                         >
-                          <div className="value">{playerBattles.wins}</div>
+                          <div className="value">
+                            {getPlayerBattleStats().wins}
+                          </div>
                           <div>Wins</div>
                         </StatCard>
                         <StatCard
@@ -1789,7 +1842,9 @@ export default function Home() {
                           borderColor="rgba(239, 68, 68, 0.5)"
                           textColor="#ef4444"
                         >
-                          <div className="value">{playerBattles.losses}</div>
+                          <div className="value">
+                            {getPlayerBattleStats().losses}
+                          </div>
                           <div>Losses</div>
                         </StatCard>
                         <StatCard
@@ -1797,7 +1852,9 @@ export default function Home() {
                           borderColor="rgba(234, 179, 8, 0.5)"
                           textColor="#eab308"
                         >
-                          <div className="value">{playerBattles.draws}</div>
+                          <div className="value">
+                            {getPlayerBattleStats().draws}
+                          </div>
                           <div>Draws</div>
                         </StatCard>
                       </StatsGrid>
