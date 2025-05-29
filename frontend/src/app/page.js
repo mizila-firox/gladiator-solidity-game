@@ -11,6 +11,9 @@ const CONTRACT_ABI = [
   "function determineWinnerWithCreature(uint256 _creatureId) public returns (string memory)",
   "function improveAttribute(uint16 _attribute) public",
   "function get_players(address _address) public view returns (tuple(uint256 id, string name, uint256 level, uint256 exp, uint256 lastAttackTime, uint256 gold, tuple(uint256 wins, uint256 losses, uint256 draws) battleStats, tuple(uint256 strength, uint256 agility, uint256 intelligence) attributes, address playerAddress))",
+  "function getTopPlayers() public view returns (tuple(address playerAddress, uint256 exp)[10] memory)",
+  "function quantity_players() public view returns (uint256)",
+  "function attackPlayer(string memory _player2) public",
 ];
 
 // Styled Components
@@ -204,8 +207,13 @@ const CharacterPortrait = styled.div`
     0 0 15px rgba(218, 165, 32, 0.3);
 
   .avatar {
-    font-size: 2.5rem;
-    margin-bottom: 8px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    border: 3px solid #daa520;
+    object-fit: cover;
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.5);
   }
 
   .name {
@@ -398,6 +406,167 @@ const CooldownTimer = styled.div`
   margin-bottom: 12px;
 `;
 
+const LeaderboardTable = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+`;
+
+const LeaderboardHeader = styled.div`
+  background: linear-gradient(145deg, #8b4513 0%, #daa520 50%, #8b4513 100%);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 50px 1fr 80px 80px 80px 100px;
+  gap: 12px;
+  font-weight: bold;
+  color: #2c1810;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+`;
+
+const LeaderboardRow = styled.div`
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 50px 1fr 80px 80px 80px 100px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+  color: #ffd700;
+  align-items: center;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 215, 0, 0.1);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .rank {
+    font-weight: bold;
+    font-size: 1.125rem;
+    color: ${(props) =>
+      props.rank === 1
+        ? "#ffd700"
+        : props.rank === 2
+        ? "#c0c0c0"
+        : props.rank === 3
+        ? "#cd7f32"
+        : "#ffd700"};
+  }
+
+  .name {
+    font-weight: bold;
+  }
+
+  .address {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+`;
+
+const ProfileContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 24px;
+  height: 100%;
+`;
+
+const ProfileCenter = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+`;
+
+const ProfileCard = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 3px solid #daa520;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  max-width: 400px;
+`;
+
+const ProfileAvatar = styled.img`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #daa520;
+  object-fit: cover;
+  margin: 0 auto 16px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(218, 165, 32, 0.5);
+  display: block;
+`;
+
+const PlayerBattleCard = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #daa520;
+  }
+
+  .player-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .player-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+    border: 2px solid #daa520;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .player-details {
+    .name {
+      font-weight: bold;
+      color: #daa520;
+      font-size: 1.125rem;
+    }
+
+    .level {
+      color: #ffd700;
+      font-size: 0.875rem;
+    }
+
+    .stats {
+      color: #a0a0a0;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+  }
+`;
+
+const BattleRecordSection = styled.div`
+  margin-bottom: 16px;
+
+  .section-title {
+    font-size: 0.875rem;
+    color: #daa520;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+`;
+
 // Navigation pages
 const PAGES = {
   ARENA: "arena",
@@ -417,26 +586,91 @@ export default function Home() {
   const [attacking, setAttacking] = useState(null);
   const [currentPage, setCurrentPage] = useState(PAGES.ARENA);
   const [cooldownTime, setCooldownTime] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [loadingPlayers, setLoadingPlayers] = useState(false);
+  const [creatureBattles, setCreatureBattles] = useState({
+    wins: 0,
+    losses: 0,
+    draws: 0,
+  });
+  const [playerBattles, setPlayerBattles] = useState({
+    wins: 0,
+    losses: 0,
+    draws: 0,
+  });
 
   const creatures = [
-    { id: 1, name: "Goblin Warrior", level: 1, exp: 10, gold: 5, emoji: "👹" },
-    { id: 2, name: "Orc Berserker", level: 2, exp: 20, gold: 10, emoji: "🧌" },
-    {
-      id: 3,
-      name: "Skeleton Knight",
-      level: 3,
-      exp: 30,
-      gold: 15,
-      emoji: "💀",
-    },
-    { id: 4, name: "Fire Demon", level: 4, exp: 40, gold: 20, emoji: "👺" },
-    { id: 5, name: "Dragon Lord", level: 5, exp: 50, gold: 25, emoji: "🐉" },
+    { id: 1, name: "Goblin Warrior", level: 1, exp: 10, gold: 1, emoji: "👹" },
+    { id: 2, name: "Orc Berserker", level: 2, exp: 50, gold: 2, emoji: "🧌" },
+    { id: 3, name: "Troll", level: 3, exp: 100, gold: 8, emoji: "💀" },
+    { id: 4, name: "Dragon", level: 4, exp: 500, gold: 16, emoji: "👺" },
+    { id: 5, name: "Hydra", level: 5, exp: 1000, gold: 32, emoji: "🐉" },
   ];
+
+  // Get gladiator image based on level
+  const getGladiatorImage = (level) => {
+    if (level >= 90) return "/90-100.webp"; // Emperor (90+)
+    if (level >= 80) return "/80-90.webp"; // King (80-89)
+    if (level >= 70) return "/70-80.webp"; // Lion (70-79)
+    if (level >= 60) return "/60-70.webp"; // Shield Bearer (60-69)
+    if (level >= 50) return "/50-60.webp"; // Sword Master (50-59)
+    if (level >= 40) return "/40-50.webp"; // Blade Warrior (40-49)
+    if (level >= 30) return "/30-40.webp"; // Veteran (30-39)
+    if (level >= 20) return "/20-30.webp"; // Mask Warrior (20-29)
+    if (level >= 10) return "/10-20.webp"; // Apprentice (10-19)
+    return "/0-10.webp"; // Novice (0-9)
+  };
 
   // Calculate player health (100 base + 10 per strength point)
   const getPlayerHealth = () => {
     if (!player) return 100;
     return 100 + player.attributes.strength * 10;
+  };
+
+  // Load separate battle records from localStorage
+  const loadBattleRecords = () => {
+    if (!account) return;
+
+    const creatureKey = `creatureBattles_${account}`;
+    const playerKey = `playerBattles_${account}`;
+
+    const savedCreatureBattles = localStorage.getItem(creatureKey);
+    const savedPlayerBattles = localStorage.getItem(playerKey);
+
+    if (savedCreatureBattles) {
+      setCreatureBattles(JSON.parse(savedCreatureBattles));
+    }
+
+    if (savedPlayerBattles) {
+      setPlayerBattles(JSON.parse(savedPlayerBattles));
+    }
+  };
+
+  // Save battle records to localStorage
+  const saveBattleRecords = (type, result) => {
+    if (!account) return;
+
+    const key =
+      type === "creature"
+        ? `creatureBattles_${account}`
+        : `playerBattles_${account}`;
+    const currentRecords =
+      type === "creature" ? creatureBattles : playerBattles;
+
+    const newRecords = { ...currentRecords };
+    if (result === "win") newRecords.wins += 1;
+    else if (result === "loss") newRecords.losses += 1;
+    else if (result === "draw") newRecords.draws += 1;
+
+    localStorage.setItem(key, JSON.stringify(newRecords));
+
+    if (type === "creature") {
+      setCreatureBattles(newRecords);
+    } else {
+      setPlayerBattles(newRecords);
+    }
   };
 
   // Calculate cooldown remaining
@@ -464,6 +698,12 @@ export default function Home() {
   useEffect(() => {
     checkConnection();
   }, []);
+
+  useEffect(() => {
+    if (account) {
+      loadBattleRecords();
+    }
+  }, [account]);
 
   const checkConnection = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -565,9 +805,26 @@ export default function Home() {
 
     setAttacking(creatureId);
     try {
+      // Store initial stats
+      const initialExp = player.exp;
+      const initialGold = player.gold;
+
       const tx = await contract.determineWinnerWithCreature(creatureId);
       await tx.wait();
       await loadPlayerData(contract, account);
+
+      // Check if player gained exp/gold to determine win/loss
+      const newPlayer = await contract.get_players(account);
+      const finalExp = Number(newPlayer.exp);
+      const finalGold = Number(newPlayer.gold);
+
+      if (finalExp > initialExp || finalGold > initialGold) {
+        saveBattleRecords("creature", "win");
+      } else if (finalExp < initialExp || finalGold < initialGold) {
+        saveBattleRecords("creature", "loss");
+      } else {
+        saveBattleRecords("creature", "draw");
+      }
     } catch (error) {
       console.error("Error attacking creature:", error);
       alert("Error attacking creature. Please try again.");
@@ -586,6 +843,114 @@ export default function Home() {
     } catch (error) {
       console.error("Error upgrading attribute:", error);
       alert("Error upgrading attribute. Please try again.");
+    }
+  };
+
+  const loadLeaderboard = async () => {
+    if (!contract) return;
+
+    setLoadingLeaderboard(true);
+    try {
+      const topPlayersData = await contract.getTopPlayers();
+      const leaderboardData = [];
+
+      for (let i = 0; i < topPlayersData.length; i++) {
+        const topPlayer = topPlayersData[i];
+        if (
+          topPlayer.playerAddress !==
+          "0x0000000000000000000000000000000000000000"
+        ) {
+          try {
+            const playerData = await contract.get_players(
+              topPlayer.playerAddress
+            );
+            if (playerData.id > 0) {
+              leaderboardData.push({
+                rank: i + 1,
+                address: topPlayer.playerAddress,
+                name: playerData.name,
+                level: Number(playerData.level),
+                exp: Number(topPlayer.exp),
+                gold: Number(playerData.gold),
+                wins: Number(playerData.battleStats.wins),
+                losses: Number(playerData.battleStats.losses),
+                draws: Number(playerData.battleStats.draws),
+              });
+            }
+          } catch (error) {
+            console.error(
+              `Error loading player ${topPlayer.playerAddress}:`,
+              error
+            );
+          }
+        }
+      }
+      setLeaderboard(leaderboardData);
+    } catch (error) {
+      console.error("Error loading leaderboard:", error);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
+
+  const loadAllPlayers = async () => {
+    if (!contract) return;
+
+    setLoadingPlayers(true);
+    try {
+      const totalPlayers = await contract.quantity_players();
+      const playersData = [];
+
+      // Note: This is a simplified approach. In a real app, you'd want pagination
+      // and a more efficient way to get all players
+      for (let i = 1; i <= Math.min(Number(totalPlayers), 50); i++) {
+        // We can't directly iterate through all players without knowing their addresses
+        // This would need to be implemented differently in a real scenario
+        // For now, we'll just use the leaderboard data
+      }
+
+      // For now, use leaderboard data as available players
+      setAllPlayers(
+        leaderboard.filter(
+          (p) => p.address.toLowerCase() !== account.toLowerCase()
+        )
+      );
+    } catch (error) {
+      console.error("Error loading all players:", error);
+    } finally {
+      setLoadingPlayers(false);
+    }
+  };
+
+  const attackPlayer = async (playerName) => {
+    if (!contract) return;
+
+    try {
+      // Store initial stats
+      const initialExp = player.exp;
+      const initialGold = player.gold;
+
+      const tx = await contract.attackPlayer(playerName);
+      await tx.wait();
+      await loadPlayerData(contract, account);
+      // Reload leaderboard to reflect changes
+      await loadLeaderboard();
+
+      // Check if player gained exp/gold to determine win/loss
+      const newPlayer = await contract.get_players(account);
+      const finalExp = Number(newPlayer.exp);
+      const finalGold = Number(newPlayer.gold);
+
+      if (finalExp > initialExp || finalGold > initialGold) {
+        saveBattleRecords("player", "win");
+      } else if (finalExp < initialExp || finalGold < initialGold) {
+        saveBattleRecords("player", "loss");
+      } else {
+        saveBattleRecords("player", "draw");
+      }
+    } catch (error) {
+      console.error("Error attacking player:", error);
+      alert("Error attacking player. Please try again.");
     }
   };
 
@@ -720,9 +1085,217 @@ export default function Home() {
             <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
               👤 PROFILE
             </MenuTitle>
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <p style={{ color: "#ffd700" }}>Profile page coming soon...</p>
-            </div>
+            {player ? (
+              <ProfileContainer>
+                <div></div> {/* Left spacer */}
+                <ProfileCenter>
+                  <ProfileCard>
+                    <ProfileAvatar src={getGladiatorImage(player.level)} />
+                    <h2
+                      style={{
+                        color: "#daa520",
+                        fontSize: "2rem",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      {player.name}
+                    </h2>
+                    <p
+                      style={{
+                        color: "#ffd700",
+                        fontSize: "1.25rem",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      Level {player.level} Gladiator
+                    </p>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "12px",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            color: "#4169e1",
+                            fontWeight: "bold",
+                            fontSize: "1.5rem",
+                          }}
+                        >
+                          {player.exp}
+                        </div>
+                        <div style={{ color: "#ffd700", fontSize: "0.875rem" }}>
+                          Experience
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div
+                          style={{
+                            color: "#ffd700",
+                            fontWeight: "bold",
+                            fontSize: "1.5rem",
+                          }}
+                        >
+                          {player.gold}
+                        </div>
+                        <div style={{ color: "#ffd700", fontSize: "0.875rem" }}>
+                          Gold
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Attributes Display */}
+                    <div style={{ textAlign: "left", marginBottom: "20px" }}>
+                      <h3
+                        style={{
+                          color: "#daa520",
+                          marginBottom: "12px",
+                          textAlign: "center",
+                        }}
+                      >
+                        Attributes
+                      </h3>
+
+                      <StatRow valueColor="#dc143c">
+                        <span className="label">💪 Strength</span>
+                        <span className="value">
+                          {player.attributes.strength}
+                        </span>
+                      </StatRow>
+                      <StatBar>
+                        <StatFill
+                          width={Math.min(player.attributes.strength * 10, 100)}
+                          gradient="linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #ff6347 100%)"
+                          shadow="0 0 10px rgba(220, 20, 60, 0.5)"
+                        />
+                      </StatBar>
+
+                      <StatRow valueColor="#32cd32">
+                        <span className="label">🏃 Agility</span>
+                        <span className="value">
+                          {player.attributes.agility}
+                        </span>
+                      </StatRow>
+                      <StatBar>
+                        <StatFill
+                          width={Math.min(player.attributes.agility * 10, 100)}
+                          gradient="linear-gradient(90deg, #006400 0%, #32cd32 50%, #90ee90 100%)"
+                          shadow="0 0 10px rgba(50, 205, 50, 0.5)"
+                        />
+                      </StatBar>
+
+                      <StatRow valueColor="#4169e1">
+                        <span className="label">🧠 Intelligence</span>
+                        <span className="value">
+                          {player.attributes.intelligence}
+                        </span>
+                      </StatRow>
+                      <StatBar>
+                        <StatFill
+                          width={Math.min(
+                            player.attributes.intelligence * 10,
+                            100
+                          )}
+                          gradient="linear-gradient(90deg, #000080 0%, #4169e1 50%, #87ceeb 100%)"
+                          shadow="0 0 10px rgba(65, 105, 225, 0.5)"
+                        />
+                      </StatBar>
+
+                      <StatRow valueColor="#ff1493">
+                        <span className="label">❤️ Health</span>
+                        <span className="value">{getPlayerHealth()}</span>
+                      </StatRow>
+                      <StatBar>
+                        <StatFill
+                          width={Math.min(getPlayerHealth() / 2, 100)}
+                          gradient="linear-gradient(90deg, #8b0000 0%, #ff1493 50%, #ff69b4 100%)"
+                          shadow="0 0 10px rgba(255, 20, 147, 0.5)"
+                        />
+                      </StatBar>
+                    </div>
+
+                    {/* Battle Record */}
+                    <div>
+                      <h3 style={{ color: "#daa520", marginBottom: "12px" }}>
+                        Battle Record
+                      </h3>
+
+                      <BattleRecordSection>
+                        <div className="section-title">🏺 vs Creatures</div>
+                        <StatsGrid>
+                          <StatCard
+                            bgColor="rgba(34, 197, 94, 0.2)"
+                            borderColor="rgba(34, 197, 94, 0.5)"
+                            textColor="#22c55e"
+                          >
+                            <div className="value">{creatureBattles.wins}</div>
+                            <div>Wins</div>
+                          </StatCard>
+                          <StatCard
+                            bgColor="rgba(239, 68, 68, 0.2)"
+                            borderColor="rgba(239, 68, 68, 0.5)"
+                            textColor="#ef4444"
+                          >
+                            <div className="value">
+                              {creatureBattles.losses}
+                            </div>
+                            <div>Losses</div>
+                          </StatCard>
+                          <StatCard
+                            bgColor="rgba(234, 179, 8, 0.2)"
+                            borderColor="rgba(234, 179, 8, 0.5)"
+                            textColor="#eab308"
+                          >
+                            <div className="value">{creatureBattles.draws}</div>
+                            <div>Draws</div>
+                          </StatCard>
+                        </StatsGrid>
+                      </BattleRecordSection>
+
+                      <BattleRecordSection>
+                        <div className="section-title">⚔️ vs Players</div>
+                        <StatsGrid>
+                          <StatCard
+                            bgColor="rgba(34, 197, 94, 0.2)"
+                            borderColor="rgba(34, 197, 94, 0.5)"
+                            textColor="#22c55e"
+                          >
+                            <div className="value">{playerBattles.wins}</div>
+                            <div>Wins</div>
+                          </StatCard>
+                          <StatCard
+                            bgColor="rgba(239, 68, 68, 0.2)"
+                            borderColor="rgba(239, 68, 68, 0.5)"
+                            textColor="#ef4444"
+                          >
+                            <div className="value">{playerBattles.losses}</div>
+                            <div>Losses</div>
+                          </StatCard>
+                          <StatCard
+                            bgColor="rgba(234, 179, 8, 0.2)"
+                            borderColor="rgba(234, 179, 8, 0.5)"
+                            textColor="#eab308"
+                          >
+                            <div className="value">{playerBattles.draws}</div>
+                            <div>Draws</div>
+                          </StatCard>
+                        </StatsGrid>
+                      </BattleRecordSection>
+                    </div>
+                  </ProfileCard>
+                </ProfileCenter>
+                <div></div> {/* Right spacer */}
+              </ProfileContainer>
+            ) : (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <p style={{ color: "#ffd700" }}>
+                  Create a gladiator to view your profile!
+                </p>
+              </div>
+            )}
           </>
         );
 
@@ -732,9 +1305,67 @@ export default function Home() {
             <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
               🏆 LEADERBOARD
             </MenuTitle>
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <p style={{ color: "#ffd700" }}>Leaderboard coming soon...</p>
+
+            <div style={{ marginBottom: "16px" }}>
+              <GoldButton
+                onClick={loadLeaderboard}
+                disabled={loadingLeaderboard}
+                style={{ padding: "12px 24px" }}
+              >
+                {loadingLeaderboard
+                  ? "🔄 Loading..."
+                  : "🔄 Refresh Leaderboard"}
+              </GoldButton>
             </div>
+
+            {leaderboard.length > 0 ? (
+              <LeaderboardTable>
+                <LeaderboardHeader>
+                  <div>Rank</div>
+                  <div>Player</div>
+                  <div>Level</div>
+                  <div>Experience</div>
+                  <div>Gold</div>
+                  <div>Record</div>
+                </LeaderboardHeader>
+                {leaderboard.map((player, index) => (
+                  <LeaderboardRow key={player.address} rank={player.rank}>
+                    <div className="rank">
+                      {player.rank === 1
+                        ? "🥇"
+                        : player.rank === 2
+                        ? "🥈"
+                        : player.rank === 3
+                        ? "🥉"
+                        : `#${player.rank}`}
+                    </div>
+                    <div>
+                      <div className="name">{player.name}</div>
+                      <div className="address">
+                        {player.address.slice(0, 6)}...
+                        {player.address.slice(-4)}
+                      </div>
+                    </div>
+                    <div>{player.level}</div>
+                    <div>{player.exp}</div>
+                    <div>{player.gold}</div>
+                    <div>
+                      <span style={{ color: "#22c55e" }}>{player.wins}W</span>/
+                      <span style={{ color: "#ef4444" }}>{player.losses}L</span>
+                      /<span style={{ color: "#eab308" }}>{player.draws}D</span>
+                    </div>
+                  </LeaderboardRow>
+                ))}
+              </LeaderboardTable>
+            ) : (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <p style={{ color: "#ffd700" }}>
+                  {loadingLeaderboard
+                    ? "Loading leaderboard..."
+                    : "No players found. Click refresh to load the leaderboard!"}
+                </p>
+              </div>
+            )}
           </>
         );
 
@@ -744,11 +1375,104 @@ export default function Home() {
             <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
               ⚔️ BATTLE
             </MenuTitle>
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <p style={{ color: "#ffd700" }}>
-                Player vs Player battles coming soon...
-              </p>
-            </div>
+
+            {player ? (
+              <>
+                <div style={{ marginBottom: "16px" }}>
+                  <GoldButton
+                    onClick={() => {
+                      loadLeaderboard().then(() => {
+                        setAllPlayers(
+                          leaderboard.filter(
+                            (p) =>
+                              p.address.toLowerCase() !== account.toLowerCase()
+                          )
+                        );
+                      });
+                    }}
+                    disabled={loadingLeaderboard}
+                    style={{ padding: "12px 24px" }}
+                  >
+                    {loadingLeaderboard ? "🔄 Loading..." : "🔄 Find Opponents"}
+                  </GoldButton>
+                </div>
+
+                {cooldownTime > 0 && (
+                  <CooldownTimer>
+                    ⏰ Player Battle Cooldown:{" "}
+                    {formatCooldownTime(cooldownTime)}
+                  </CooldownTimer>
+                )}
+
+                {allPlayers.length > 0 ? (
+                  <div>
+                    <h3 style={{ color: "#daa520", marginBottom: "16px" }}>
+                      Available Opponents ({allPlayers.length})
+                    </h3>
+                    {allPlayers.map((opponent) => (
+                      <PlayerBattleCard key={opponent.address}>
+                        <div className="player-info">
+                          <img
+                            src={getGladiatorImage(opponent.level)}
+                            alt="Opponent Portrait"
+                            className="player-avatar"
+                          />
+                          <div className="player-details">
+                            <div className="name">{opponent.name}</div>
+                            <div className="level">Level {opponent.level}</div>
+                            <div className="stats">
+                              {opponent.wins}W / {opponent.losses}L /{" "}
+                              {opponent.draws}D
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                          }}
+                        >
+                          <div
+                            style={{ textAlign: "right", fontSize: "0.875rem" }}
+                          >
+                            <div style={{ color: "#4169e1" }}>
+                              ⭐ {opponent.exp}
+                            </div>
+                            <div style={{ color: "#ffd700" }}>
+                              🪙 {opponent.gold}
+                            </div>
+                          </div>
+                          <GoldButton
+                            onClick={() => attackPlayer(opponent.name)}
+                            disabled={cooldownTime > 0}
+                            style={{ padding: "8px 16px" }}
+                          >
+                            {cooldownTime > 0
+                              ? `⏰ ${cooldownTime}s`
+                              : "⚔️ Challenge"}
+                          </GoldButton>
+                        </div>
+                      </PlayerBattleCard>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                    <p style={{ color: "#ffd700" }}>
+                      {loadingLeaderboard
+                        ? "Loading opponents..."
+                        : "No opponents found. Click 'Find Opponents' to discover other players!"}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <p style={{ color: "#ffd700" }}>
+                  Create a gladiator to start battling other players!
+                </p>
+              </div>
+            )}
           </>
         );
 
@@ -918,7 +1642,11 @@ export default function Home() {
                 <Panel>
                   <PanelInner>
                     <CharacterPortrait>
-                      <div className="avatar">🏛️</div>
+                      <img
+                        src={getGladiatorImage(player.level)}
+                        alt="Gladiator Portrait"
+                        className="avatar"
+                      />
                       <div className="name">{player.name}</div>
                       <div className="level">
                         Level {player.level} Gladiator
@@ -1010,36 +1738,70 @@ export default function Home() {
                   </PanelInner>
                 </Panel>
 
-                {/* Battle Stats */}
+                {/* Battle Record */}
                 <Panel>
                   <PanelInner>
                     <MenuTitle>Battle Record</MenuTitle>
-                    <StatsGrid>
-                      <StatCard
-                        bgColor="rgba(34, 197, 94, 0.2)"
-                        borderColor="rgba(34, 197, 94, 0.5)"
-                        textColor="#22c55e"
-                      >
-                        <div className="value">{player.battleStats.wins}</div>
-                        <div>Wins</div>
-                      </StatCard>
-                      <StatCard
-                        bgColor="rgba(239, 68, 68, 0.2)"
-                        borderColor="rgba(239, 68, 68, 0.5)"
-                        textColor="#ef4444"
-                      >
-                        <div className="value">{player.battleStats.losses}</div>
-                        <div>Losses</div>
-                      </StatCard>
-                      <StatCard
-                        bgColor="rgba(234, 179, 8, 0.2)"
-                        borderColor="rgba(234, 179, 8, 0.5)"
-                        textColor="#eab308"
-                      >
-                        <div className="value">{player.battleStats.draws}</div>
-                        <div>Draws</div>
-                      </StatCard>
-                    </StatsGrid>
+
+                    <BattleRecordSection>
+                      <div className="section-title">🏺 vs Creatures</div>
+                      <StatsGrid>
+                        <StatCard
+                          bgColor="rgba(34, 197, 94, 0.2)"
+                          borderColor="rgba(34, 197, 94, 0.5)"
+                          textColor="#22c55e"
+                        >
+                          <div className="value">{creatureBattles.wins}</div>
+                          <div>Wins</div>
+                        </StatCard>
+                        <StatCard
+                          bgColor="rgba(239, 68, 68, 0.2)"
+                          borderColor="rgba(239, 68, 68, 0.5)"
+                          textColor="#ef4444"
+                        >
+                          <div className="value">{creatureBattles.losses}</div>
+                          <div>Losses</div>
+                        </StatCard>
+                        <StatCard
+                          bgColor="rgba(234, 179, 8, 0.2)"
+                          borderColor="rgba(234, 179, 8, 0.5)"
+                          textColor="#eab308"
+                        >
+                          <div className="value">{creatureBattles.draws}</div>
+                          <div>Draws</div>
+                        </StatCard>
+                      </StatsGrid>
+                    </BattleRecordSection>
+
+                    <BattleRecordSection>
+                      <div className="section-title">⚔️ vs Players</div>
+                      <StatsGrid>
+                        <StatCard
+                          bgColor="rgba(34, 197, 94, 0.2)"
+                          borderColor="rgba(34, 197, 94, 0.5)"
+                          textColor="#22c55e"
+                        >
+                          <div className="value">{playerBattles.wins}</div>
+                          <div>Wins</div>
+                        </StatCard>
+                        <StatCard
+                          bgColor="rgba(239, 68, 68, 0.2)"
+                          borderColor="rgba(239, 68, 68, 0.5)"
+                          textColor="#ef4444"
+                        >
+                          <div className="value">{playerBattles.losses}</div>
+                          <div>Losses</div>
+                        </StatCard>
+                        <StatCard
+                          bgColor="rgba(234, 179, 8, 0.2)"
+                          borderColor="rgba(234, 179, 8, 0.5)"
+                          textColor="#eab308"
+                        >
+                          <div className="value">{playerBattles.draws}</div>
+                          <div>Draws</div>
+                        </StatCard>
+                      </StatsGrid>
+                    </BattleRecordSection>
                   </PanelInner>
                 </Panel>
               </>
