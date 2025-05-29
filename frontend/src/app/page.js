@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import styled from "styled-components";
 
 // Replace with your deployed contract address
-const CONTRACT_ADDRESS = "0x07883bA76958F85C97804ba2f599dA41bFF08848"; // You need to put your deployed contract address here
+const CONTRACT_ADDRESS = "0x07883bA76958F85C97804ba2f599dA41bFF08848";
 const CONTRACT_ABI = [
   "function createPlayer(string memory _name) public",
   "function determineWinnerWithCreature(uint256 _creatureId) public returns (string memory)",
@@ -41,9 +41,9 @@ const Header = styled.header`
   );
   border: 3px solid #daa520;
   border-bottom: 4px solid #daa520;
-  padding: 16px 24px;
+  padding: 12px 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-
+  height: 70px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -54,14 +54,14 @@ const Title = styled.h1`
   font-weight: 700;
   color: #daa520;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin: 0;
 `;
 
 const HeaderStats = styled.div`
   display: flex;
-  gap: 24px;
-  font-size: 0.875rem;
+  gap: 20px;
+  font-size: 0.8rem;
 `;
 
 const StatItem = styled.div`
@@ -69,23 +69,23 @@ const StatItem = styled.div`
 
   .value {
     font-weight: bold;
-    font-size: 1.125rem;
+    font-size: 1rem;
     color: ${(props) => props.color || "#ffd700"};
   }
 
   .label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     opacity: 0.8;
   }
 `;
 
 const MainLayout = styled.div`
   display: flex;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 70px);
 `;
 
 const Sidebar = styled.aside`
-  width: 280px;
+  width: 260px;
   background: linear-gradient(
     145deg,
     #8b4513 0%,
@@ -105,7 +105,7 @@ const SidebarInner = styled.div`
   background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
   border: 2px solid #8b4513;
   margin: 4px;
-  padding: 20px;
+  padding: 16px;
   height: calc(100% - 8px);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 `;
@@ -132,7 +132,7 @@ const ContentInner = styled.div`
   background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
   border: 2px solid #8b4513;
   margin: 4px;
-  padding: 24px;
+  padding: 20px;
   height: calc(100% - 8px);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
   overflow-y: auto;
@@ -151,7 +151,7 @@ const Panel = styled.div`
   );
   border: 3px solid #daa520;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 `;
 
@@ -160,7 +160,7 @@ const PanelInner = styled.div`
   border: 2px solid #8b4513;
   border-radius: 4px;
   margin: 4px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 `;
 
@@ -170,19 +170,23 @@ const MenuTitle = styled.h3`
   color: #daa520;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   text-align: center;
-  margin-bottom: 16px;
-  font-size: 1.125rem;
+  margin-bottom: 12px;
+  font-size: 1rem;
 `;
 
 const MenuItem = styled.div`
-  padding: 12px;
+  padding: 10px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #ffd700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   border: 1px solid transparent;
+  background: ${(props) =>
+    props.active ? "rgba(255, 215, 0, 0.3)" : "transparent"};
+  border-color: ${(props) =>
+    props.active ? "rgba(255, 215, 0, 0.5)" : "transparent"};
 
   &:hover {
     background: rgba(255, 215, 0, 0.2);
@@ -194,49 +198,28 @@ const CharacterPortrait = styled.div`
   background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
   border: 3px solid #daa520;
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
   text-align: center;
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8),
     0 0 15px rgba(218, 165, 32, 0.3);
 
   .avatar {
-    font-size: 3rem;
-    margin-bottom: 12px;
+    font-size: 2.5rem;
+    margin-bottom: 8px;
   }
 
   .name {
-    font-family: "Cinzel", serif;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: bold;
     color: #daa520;
-    font-size: 1.25rem;
     margin-bottom: 4px;
   }
 
   .level {
-    color: #ffd700;
     font-size: 0.875rem;
+    color: #ffd700;
+    opacity: 0.9;
   }
-`;
-
-const StatBar = styled.div`
-  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
-  border: 1px solid #8b4513;
-  border-radius: 10px;
-  padding: 2px;
-  height: 20px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-  margin-top: 4px;
-  margin-bottom: 12px;
-`;
-
-const StatFill = styled.div`
-  height: 100%;
-  border-radius: 8px;
-  transition: width 0.8s ease-in-out;
-  width: ${(props) => props.width}%;
-  background: ${(props) => props.gradient};
-  box-shadow: ${(props) => props.shadow};
 `;
 
 const StatRow = styled.div`
@@ -248,7 +231,6 @@ const StatRow = styled.div`
 
   .label {
     color: #ffd700;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   }
 
   .value {
@@ -257,162 +239,230 @@ const StatRow = styled.div`
   }
 `;
 
-const GoldButton = styled.button`
-  background: linear-gradient(
-    145deg,
-    #daa520 0%,
-    #ffd700 25%,
-    #ffff00 50%,
-    #ffd700 75%,
-    #daa520 100%
-  );
-  border: 2px solid #b8860b;
-  border-radius: 6px;
-  color: #2d1810;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 2px rgba(255, 255, 255, 0.3);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  padding: 8px 16px;
-  font-family: "Cinzel", serif;
-
-  &:hover {
-    background: linear-gradient(
-      145deg,
-      #ffd700 0%,
-      #ffff00 25%,
-      #ffffff 50%,
-      #ffff00 75%,
-      #ffd700 100%
-    );
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.6);
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const CreatureGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-`;
-
-const CreatureCard = styled.div`
-  background: linear-gradient(
-    135deg,
-    #2d1810 0%,
-    #4a2c1a 25%,
-    #3d2317 75%,
-    #2d1810 100%
-  );
-  border: 2px solid #8b4513;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-
-  &:hover {
-    border-color: #daa520;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 25px rgba(218, 165, 32, 0.4);
-    transform: translateY(-2px);
-  }
-
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const CreatureAvatar = styled.div`
-  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
-  border: 3px solid #daa520;
-  border-radius: 8px;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
-`;
-
-const Input = styled.input`
+const StatBar = styled.div`
   width: 100%;
-  padding: 12px;
-  background: #2c1810;
-  border: 2px solid #daa520;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 4px;
-  color: #ffd700;
-  font-family: "Cinzel", serif;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+`;
 
-  &::placeholder {
-    color: rgba(255, 215, 0, 0.5);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-  }
+const StatFill = styled.div`
+  height: 100%;
+  width: ${(props) => props.width}%;
+  background: ${(props) => props.gradient};
+  border-radius: 3px;
+  box-shadow: ${(props) => props.shadow};
+  transition: width 0.3s ease;
 `;
 
 const ButtonGrid = styled.div`
-  margin-top: 16px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 4px;
+  gap: 6px;
+  margin-top: 8px;
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
-  font-size: 0.75rem;
-  text-align: center;
 `;
 
 const StatCard = styled.div`
   background: ${(props) => props.bgColor};
-  padding: 8px;
-  border-radius: 4px;
   border: 1px solid ${(props) => props.borderColor};
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  color: ${(props) => props.textColor};
 
   .value {
-    color: ${(props) => props.textColor};
+    font-size: 1.25rem;
     font-weight: bold;
-    font-size: 1rem;
+    margin-bottom: 2px;
+  }
+
+  div:last-child {
+    font-size: 0.75rem;
+    opacity: 0.9;
   }
 `;
 
+const GoldButton = styled.button`
+  background: linear-gradient(
+    145deg,
+    #daa520 0%,
+    #ffd700 25%,
+    #ffed4e 50%,
+    #ffd700 75%,
+    #daa520 100%
+  );
+  border: 2px solid #b8860b;
+  border-radius: 6px;
+  color: #8b4513;
+  font-weight: bold;
+  font-family: "Cinzel", serif;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(
+      145deg,
+      #ffed4e 0%,
+      #ffd700 25%,
+      #daa520 50%,
+      #ffd700 75%,
+      #ffed4e 100%
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 2px solid #8b4513;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffd700;
+  font-family: "Cinzel", serif;
+  font-size: 0.875rem;
+
+  &:focus {
+    outline: none;
+    border-color: #daa520;
+    box-shadow: 0 0 8px rgba(218, 165, 32, 0.3);
+  }
+
+  &::placeholder {
+    color: rgba(255, 215, 0, 0.5);
+  }
+`;
+
+const CreatureGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+`;
+
+const CreatureCard = styled.div`
+  background: linear-gradient(135deg, #2c1810 0%, #3d2317 50%, #2c1810 100%);
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
+const CreatureAvatar = styled.div`
+  font-size: 3rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a0f08 0%, #2d1810 50%, #1a0f08 100%);
+  border: 2px solid #daa520;
+  border-radius: 50%;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+`;
+
+const CooldownTimer = styled.div`
+  background: rgba(255, 69, 0, 0.2);
+  border: 1px solid rgba(255, 69, 0, 0.5);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  color: #ff4500;
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+`;
+
+// Navigation pages
+const PAGES = {
+  ARENA: "arena",
+  PROFILE: "profile",
+  LEADERBOARD: "leaderboard",
+  BATTLE: "battle",
+  MARKET: "market",
+  QUESTS: "quests",
+};
+
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(false);
   const [account, setAccount] = useState("");
+  const [contract, setContract] = useState(null);
   const [player, setPlayer] = useState(null);
   const [playerName, setPlayerName] = useState("");
   const [creating, setCreating] = useState(false);
   const [attacking, setAttacking] = useState(null);
-  const [contract, setContract] = useState(null);
+  const [currentPage, setCurrentPage] = useState(PAGES.ARENA);
+  const [cooldownTime, setCooldownTime] = useState(0);
 
   const creatures = [
-    { id: 1, name: "Goblin", level: 1, emoji: "👹", exp: 10, gold: 1 },
-    { id: 2, name: "Orc", level: 2, emoji: "🧌", exp: 50, gold: 2 },
-    { id: 3, name: "Troll", level: 3, emoji: "🧟", exp: 100, gold: 8 },
-    { id: 4, name: "Dragon", level: 4, emoji: "🐉", exp: 500, gold: 16 },
-    { id: 5, name: "Hydra", level: 5, emoji: "🐲", exp: 1000, gold: 32 },
+    { id: 1, name: "Goblin Warrior", level: 1, exp: 10, gold: 5, emoji: "👹" },
+    { id: 2, name: "Orc Berserker", level: 2, exp: 20, gold: 10, emoji: "🧌" },
+    {
+      id: 3,
+      name: "Skeleton Knight",
+      level: 3,
+      exp: 30,
+      gold: 15,
+      emoji: "💀",
+    },
+    { id: 4, name: "Fire Demon", level: 4, exp: 40, gold: 20, emoji: "👺" },
+    { id: 5, name: "Dragon Lord", level: 5, exp: 50, gold: 25, emoji: "🐉" },
   ];
 
+  // Calculate player health (100 base + 10 per strength point)
+  const getPlayerHealth = () => {
+    if (!player) return 100;
+    return 100 + player.attributes.strength * 10;
+  };
+
+  // Calculate cooldown remaining
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      checkConnection();
-    }
+    if (!player || !player.lastAttackTime) return;
+
+    const updateCooldown = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const lastAttack = parseInt(player.lastAttackTime);
+      const cooldownDuration = 30; // 30 seconds from contract
+      const timeRemaining = Math.max(0, lastAttack + cooldownDuration - now);
+      setCooldownTime(timeRemaining);
+    };
+
+    updateCooldown();
+    const interval = setInterval(updateCooldown, 1000);
+    return () => clearInterval(interval);
+  }, [player]);
+
+  const formatCooldownTime = (seconds) => {
+    if (seconds <= 0) return "Ready to attack!";
+    return `Cooldown: ${seconds}s`;
+  };
+
+  useEffect(() => {
+    checkConnection();
   }, []);
 
   const checkConnection = async () => {
@@ -422,9 +472,9 @@ export default function Home() {
           method: "eth_accounts",
         });
         if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          setIsConnected(true);
-          await setupContract(accounts[0]);
+          const userAccount = accounts[0];
+          setAccount(userAccount);
+          await setupContract(userAccount);
         }
       } catch (error) {
         console.error("Error checking connection:", error);
@@ -436,16 +486,13 @@ export default function Home() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
+      const gameContract = new ethers.Contract(
         CONTRACT_ADDRESS,
         CONTRACT_ABI,
         signer
       );
-
-      setContract(contract);
-
-      // Load player data if exists
-      await loadPlayerData(contract, userAccount);
+      setContract(gameContract);
+      await loadPlayerData(gameContract, userAccount);
     } catch (error) {
       console.error("Error setting up contract:", error);
     }
@@ -454,23 +501,23 @@ export default function Home() {
   const loadPlayerData = async (contract, userAccount) => {
     try {
       const playerData = await contract.get_players(userAccount);
-
       if (playerData.id > 0) {
         setPlayer({
           id: Number(playerData.id),
           name: playerData.name,
           level: Number(playerData.level),
           exp: Number(playerData.exp),
+          lastAttackTime: Number(playerData.lastAttackTime),
           gold: Number(playerData.gold),
-          attributes: {
-            strength: Number(playerData.attributes.strength),
-            agility: Number(playerData.attributes.agility),
-            intelligence: Number(playerData.attributes.intelligence),
-          },
           battleStats: {
             wins: Number(playerData.battleStats.wins),
             losses: Number(playerData.battleStats.losses),
             draws: Number(playerData.battleStats.draws),
+          },
+          attributes: {
+            strength: Number(playerData.attributes.strength),
+            agility: Number(playerData.attributes.agility),
+            intelligence: Number(playerData.attributes.intelligence),
           },
         });
       }
@@ -485,12 +532,11 @@ export default function Home() {
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
-        setAccount(accounts[0]);
-        setIsConnected(true);
-        await setupContract(accounts[0]);
+        const userAccount = accounts[0];
+        setAccount(userAccount);
+        await setupContract(userAccount);
       } catch (error) {
-        console.error("Failed to connect wallet:", error);
-        alert("Failed to connect wallet");
+        console.error("Error connecting wallet:", error);
       }
     } else {
       alert("Please install MetaMask!");
@@ -498,80 +544,244 @@ export default function Home() {
   };
 
   const createPlayer = async () => {
-    if (!playerName.trim()) {
-      alert("Please enter a gladiator name!");
-      return;
-    }
-
-    if (!contract) {
-      alert(
-        "Contract not connected! Please deploy your contract and update the CONTRACT_ADDRESS"
-      );
-      return;
-    }
+    if (!contract || !playerName.trim()) return;
 
     setCreating(true);
     try {
-      const tx = await contract.createPlayer(playerName);
-      console.log("Transaction sent:", tx.hash);
-
+      const tx = await contract.createPlayer(playerName.trim());
       await tx.wait();
-      console.log("Transaction confirmed!");
-
       await loadPlayerData(contract, account);
-      alert("Gladiator created successfully!");
+      setPlayerName("");
     } catch (error) {
       console.error("Error creating player:", error);
-      alert("Failed to create player: " + error.message);
+      alert("Error creating player. Please try again.");
+    } finally {
+      setCreating(false);
     }
-    setCreating(false);
   };
 
   const attackCreature = async (creatureId) => {
-    if (!contract) {
-      alert("Contract not connected!");
-      return;
-    }
+    if (!contract || cooldownTime > 0) return;
 
     setAttacking(creatureId);
     try {
       const tx = await contract.determineWinnerWithCreature(creatureId);
-      console.log("Attack transaction sent:", tx.hash);
-
       await tx.wait();
-      console.log("Attack confirmed!");
-
       await loadPlayerData(contract, account);
-      alert("Battle completed!");
     } catch (error) {
       console.error("Error attacking creature:", error);
-      alert("Attack failed: " + error.message);
+      alert("Error attacking creature. Please try again.");
+    } finally {
+      setAttacking(null);
     }
-    setAttacking(null);
   };
 
   const upgradeAttribute = async (attributeId) => {
-    if (!contract) {
-      alert("Contract not connected!");
-      return;
-    }
+    if (!contract) return;
 
     try {
       const tx = await contract.improveAttribute(attributeId);
-      console.log("Upgrade transaction sent:", tx.hash);
-
       await tx.wait();
-      console.log("Upgrade confirmed!");
-
       await loadPlayerData(contract, account);
-      alert("Attribute upgraded!");
     } catch (error) {
       console.error("Error upgrading attribute:", error);
-      alert("Upgrade failed: " + error.message);
+      alert("Error upgrading attribute. Please try again.");
     }
   };
 
-  if (!isConnected) {
+  const renderPageContent = () => {
+    switch (currentPage) {
+      case PAGES.ARENA:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              🏛️ THE ARENA
+            </MenuTitle>
+
+            {player ? (
+              <>
+                {cooldownTime > 0 && (
+                  <CooldownTimer>
+                    ⏰ {formatCooldownTime(cooldownTime)}
+                  </CooldownTimer>
+                )}
+
+                <CreatureGrid>
+                  {creatures.map((creature) => (
+                    <CreatureCard key={creature.id}>
+                      <CreatureAvatar>{creature.emoji}</CreatureAvatar>
+
+                      <div style={{ flex: 1 }}>
+                        <h4
+                          style={{
+                            color: "#ffd700",
+                            fontWeight: "bold",
+                            fontSize: "1rem",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {creature.name}
+                        </h4>
+                        <p
+                          style={{
+                            color: "#ffd700",
+                            fontSize: "0.8rem",
+                            marginBottom: "8px",
+                            opacity: 0.8,
+                          }}
+                        >
+                          Level {creature.level}
+                        </p>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "6px",
+                            fontSize: "0.8rem",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span style={{ color: "#4169e1" }}>⭐ EXP:</span>
+                            <span
+                              style={{ color: "#4169e1", fontWeight: "bold" }}
+                            >
+                              {creature.exp}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span style={{ color: "#ffd700" }}>🪙 Gold:</span>
+                            <span
+                              style={{ color: "#ffd700", fontWeight: "bold" }}
+                            >
+                              {creature.gold}
+                            </span>
+                          </div>
+                        </div>
+
+                        <GoldButton
+                          onClick={() => attackCreature(creature.id)}
+                          disabled={
+                            attacking === creature.id || cooldownTime > 0
+                          }
+                          style={{ width: "100%", padding: "10px" }}
+                        >
+                          {attacking === creature.id
+                            ? "⚔️ Fighting..."
+                            : cooldownTime > 0
+                            ? `⏰ ${cooldownTime}s`
+                            : "⚔️ Attack"}
+                        </GoldButton>
+                      </div>
+                    </CreatureCard>
+                  ))}
+                </CreatureGrid>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🏛️</div>
+                <h4
+                  style={{
+                    fontSize: "1.5rem",
+                    marginBottom: "16px",
+                    color: "#daa520",
+                  }}
+                >
+                  Welcome to the Arena
+                </h4>
+                <p
+                  style={{
+                    fontSize: "1rem",
+                    color: "#ffd700",
+                    marginBottom: "20px",
+                  }}
+                >
+                  Create your gladiator to begin your journey to glory!
+                </p>
+              </div>
+            )}
+          </>
+        );
+
+      case PAGES.PROFILE:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              👤 PROFILE
+            </MenuTitle>
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ color: "#ffd700" }}>Profile page coming soon...</p>
+            </div>
+          </>
+        );
+
+      case PAGES.LEADERBOARD:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              🏆 LEADERBOARD
+            </MenuTitle>
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ color: "#ffd700" }}>Leaderboard coming soon...</p>
+            </div>
+          </>
+        );
+
+      case PAGES.BATTLE:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              ⚔️ BATTLE
+            </MenuTitle>
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ color: "#ffd700" }}>
+                Player vs Player battles coming soon...
+              </p>
+            </div>
+          </>
+        );
+
+      case PAGES.MARKET:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              🏪 MARKET
+            </MenuTitle>
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ color: "#ffd700" }}>Market coming soon...</p>
+            </div>
+          </>
+        );
+
+      case PAGES.QUESTS:
+        return (
+          <>
+            <MenuTitle style={{ fontSize: "1.75rem", marginBottom: "20px" }}>
+              🎯 QUESTS
+            </MenuTitle>
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <p style={{ color: "#ffd700" }}>Quests coming soon...</p>
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (!account) {
     return (
       <AppContainer>
         <div
@@ -583,15 +793,15 @@ export default function Home() {
             padding: "20px",
           }}
         >
-          <Panel style={{ maxWidth: "600px", width: "100%" }}>
+          <Panel style={{ maxWidth: "500px", width: "100%" }}>
             <PanelInner style={{ textAlign: "center" }}>
-              <Title style={{ fontSize: "2.5rem", marginBottom: "24px" }}>
+              <Title style={{ fontSize: "2rem", marginBottom: "20px" }}>
                 ⚔️ GLADIATOR ARENA ⚔️
               </Title>
               <p
                 style={{
-                  fontSize: "1.25rem",
-                  marginBottom: "32px",
+                  fontSize: "1rem",
+                  marginBottom: "24px",
                   color: "#ffd700",
                 }}
               >
@@ -600,7 +810,7 @@ export default function Home() {
               </p>
               <GoldButton
                 onClick={connectWallet}
-                style={{ fontSize: "1.25rem", padding: "16px 32px" }}
+                style={{ fontSize: "1rem", padding: "12px 24px" }}
               >
                 ⚔️ Connect Wallet & Enter Arena
               </GoldButton>
@@ -642,12 +852,42 @@ export default function Home() {
             <Panel>
               <PanelInner>
                 <MenuTitle>Menu</MenuTitle>
-                <MenuItem>🏛️ Arena</MenuItem>
-                <MenuItem>👤 Profile</MenuItem>
-                <MenuItem>🏆 Leaderboard</MenuItem>
-                <MenuItem>⚔️ Battle</MenuItem>
-                <MenuItem>🏪 Market</MenuItem>
-                <MenuItem>🎯 Quests</MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.ARENA}
+                  onClick={() => setCurrentPage(PAGES.ARENA)}
+                >
+                  🏛️ Arena
+                </MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.PROFILE}
+                  onClick={() => setCurrentPage(PAGES.PROFILE)}
+                >
+                  👤 Profile
+                </MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.LEADERBOARD}
+                  onClick={() => setCurrentPage(PAGES.LEADERBOARD)}
+                >
+                  🏆 Leaderboard
+                </MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.BATTLE}
+                  onClick={() => setCurrentPage(PAGES.BATTLE)}
+                >
+                  ⚔️ Battle
+                </MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.MARKET}
+                  onClick={() => setCurrentPage(PAGES.MARKET)}
+                >
+                  🏪 Market
+                </MenuItem>
+                <MenuItem
+                  active={currentPage === PAGES.QUESTS}
+                  onClick={() => setCurrentPage(PAGES.QUESTS)}
+                >
+                  🎯 Quests
+                </MenuItem>
               </PanelInner>
             </Panel>
 
@@ -735,22 +975,34 @@ export default function Home() {
                       />
                     </StatBar>
 
+                    <StatRow valueColor="#ff1493">
+                      <span className="label">❤️ Health</span>
+                      <span className="value">{getPlayerHealth()}</span>
+                    </StatRow>
+                    <StatBar>
+                      <StatFill
+                        width={Math.min(getPlayerHealth() / 2, 100)}
+                        gradient="linear-gradient(90deg, #8b0000 0%, #ff1493 50%, #ff69b4 100%)"
+                        shadow="0 0 10px rgba(255, 20, 147, 0.5)"
+                      />
+                    </StatBar>
+
                     <ButtonGrid>
                       <GoldButton
                         onClick={() => upgradeAttribute(1)}
-                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
+                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
                       >
                         💪 STR
                       </GoldButton>
                       <GoldButton
                         onClick={() => upgradeAttribute(2)}
-                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
+                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
                       >
                         🏃 AGI
                       </GoldButton>
                       <GoldButton
                         onClick={() => upgradeAttribute(3)}
-                        style={{ fontSize: "0.75rem", padding: "8px 4px" }}
+                        style={{ fontSize: "0.7rem", padding: "6px 4px" }}
                       >
                         🧠 INT
                       </GoldButton>
@@ -797,117 +1049,7 @@ export default function Home() {
 
         {/* Main Content */}
         <MainContent>
-          <ContentInner>
-            <MenuTitle style={{ fontSize: "2rem", marginBottom: "24px" }}>
-              🏛️ THE ARENA
-            </MenuTitle>
-
-            {player ? (
-              <CreatureGrid>
-                {creatures.map((creature) => (
-                  <CreatureCard key={creature.id}>
-                    <CreatureAvatar>{creature.emoji}</CreatureAvatar>
-
-                    <div style={{ flex: 1 }}>
-                      <h4
-                        style={{
-                          color: "#ffd700",
-                          fontWeight: "bold",
-                          fontSize: "1.125rem",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {creature.name}
-                      </h4>
-                      <p
-                        style={{
-                          color: "#ffd700",
-                          fontSize: "0.875rem",
-                          marginBottom: "8px",
-                          opacity: 0.8,
-                        }}
-                      >
-                        Level {creature.level}
-                      </p>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "8px",
-                          fontSize: "0.875rem",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <span style={{ color: "#4169e1" }}>⭐ EXP:</span>
-                          <span
-                            style={{ color: "#4169e1", fontWeight: "bold" }}
-                          >
-                            {creature.exp}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <span style={{ color: "#ffd700" }}>🪙 Gold:</span>
-                          <span
-                            style={{ color: "#ffd700", fontWeight: "bold" }}
-                          >
-                            {creature.gold}
-                          </span>
-                        </div>
-                      </div>
-
-                      <GoldButton
-                        onClick={() => attackCreature(creature.id)}
-                        disabled={attacking === creature.id}
-                        style={{ width: "100%", padding: "12px" }}
-                      >
-                        {attacking === creature.id
-                          ? "⚔️ Fighting..."
-                          : "⚔️ Attack"}
-                      </GoldButton>
-                    </div>
-                  </CreatureCard>
-                ))}
-              </CreatureGrid>
-            ) : (
-              <div style={{ textAlign: "center", padding: "80px 20px" }}>
-                <div style={{ fontSize: "4rem", marginBottom: "16px" }}>🏛️</div>
-                <h4
-                  style={{
-                    fontSize: "2rem",
-                    marginBottom: "16px",
-                    color: "#daa520",
-                  }}
-                >
-                  Welcome to the Arena
-                </h4>
-                <p
-                  style={{
-                    fontSize: "1.125rem",
-                    color: "#ffd700",
-                    marginBottom: "24px",
-                  }}
-                >
-                  Create your gladiator to begin your journey to glory!
-                </p>
-                <p style={{ fontSize: "0.875rem", color: "#a0a0a0" }}>
-                  Fight monsters, gain experience, and become the ultimate
-                  champion.
-                </p>
-              </div>
-            )}
-          </ContentInner>
+          <ContentInner>{renderPageContent()}</ContentInner>
         </MainContent>
       </MainLayout>
     </AppContainer>
